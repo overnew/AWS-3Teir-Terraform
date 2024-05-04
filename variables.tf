@@ -48,6 +48,27 @@ variable "web_asg_security_group_name" {}
 variable "app_asg_security_group_name" {}
 variable "db_sg_name" {}
 
+#3Tier
+variable "web_alb_name" {}
+variable "app_alb_name" {}
+variable "web_asg_name" {}
+variable "app_asg_name" {}
+variable "web_launch_template_name" {}
+variable "app_launch_template_name" {}
+variable "database" {}
+
+
+variable "image_id" {}
+variable "instance_type" {}
+variable "key_name" {}
+
+
+variable "db_name" {}
+variable "instance_type_db" {}
+variable "db_username" {}
+variable "db_password" {}
+variable "db_subnet_group_name" {}
+
 
 /*
 

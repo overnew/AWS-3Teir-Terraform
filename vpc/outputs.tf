@@ -1,3 +1,26 @@
 output "vpc_id" {
   value = aws_vpc.vpc_name.id
 }
+
+output "public_subnet_ids" {
+  value = values(aws_subnet.public_subnets)[*].id
+}
+
+output "private_subnet_ids" {
+  value = values(aws_subnet.private_subnets)[*].id
+}
+
+output "web_subnet_ids" {
+  value = values(aws_subnet.public_subnets["web_sub_1a"].id,
+    aws_subnet.public_subnets["web_sub_1c"].id)
+}
+
+output "app_subnet_ids" {
+  value = values(aws_subnet.public_subnets["app_sub_1a"].id,
+    aws_subnet.public_subnets["app_sub_2c"].id)
+}
+
+output "db_subnet_ids" {
+  value = values(aws_subnet.public_subnets["db_sub_1a"].id,
+    aws_subnet.public_subnets["db_sub_2c"].id)
+}

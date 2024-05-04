@@ -70,3 +70,18 @@ app_alb_sg_name = "app_alb_sg"
 web_asg_security_group_name = "web_asg_security_group"
 app_asg_security_group_name = "app_asg_security_group"
 db_sg_name = "db_sg"
+
+#3Tier
+web_alb_name = "web-alb"
+app_alb_name = "app-alb"
+web_asg_name = "web-asg"
+app_asg_name = "app-asg"
+web_launch_template_name = "web-launch-template"
+app_launch_template_name = "app-launch-template"
+image_id = "ami-09a7535106fbd42d5"  #최신 우분투 AMI
+instance_type = "t2.micro"
+db_name = "3tier-db"
+instance_type_db = "db.t3.micro"
+db_username = "rootroot"
+db_password = "rootroot"
+db_subnet_group_name = "db-subnet-group"
