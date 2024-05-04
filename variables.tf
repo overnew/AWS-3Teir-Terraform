@@ -39,10 +39,12 @@ variable "private_rt_name" {}
 
 variable "private_subnet_data" {}
 variable "private_subnet_name" {}
+
+
 #커스텀 시작
 
 
-
+/*
 
 
 variable "instance-type" {
@@ -196,3 +198,4 @@ variable "db-subnet-grp-name" {
   description = "Name for DB Subnet Group"
 }
 
+*/

@@ -1,25 +1,28 @@
 project_name = "again"
-owner = "jin"
+owner = "ldj"
+
+#기본 태그 정보 정의
+
 
 #VPC
-region = "ap-northeast-2"
+region = "ap-northeast-1"
 vpc_name = "3-tier-vpc"
 vpc_cidr_block = "10.10.0.0/16"
 igw_name = "3-tier-igw"
 nat_gw_name = "nat-gw"
 
 az_names = [
-  "ap-northeast-2a",
-  "ap-northeast-2c"
+  "ap-northeast-1a",
+  "ap-northeast-1c"
 ]
 
 public_subnet_data = {
   pub_sub_1a = {
-    zone = "ap-northeast-2a"
+    zone = "ap-northeast-1a"
     cidr = "10.10.1.0/24"
   },
   pub_sub_2c = {
-    zone = "ap-northeast-2c"
+    zone = "ap-northeast-1c"
     cidr = "10.10.2.0/24"
   }
 }
@@ -32,36 +35,38 @@ private_rt_name = "private-rt"
 
 private_subnet_data = {
   web_sub_1a = {
-    zone = "ap-northeast-2a"
+    zone = "ap-northeast-1a"
     cidr = "10.10.16.0/20"
   },
   web_sub_2c = {
-    zone = "ap-northeast-2c"
+    zone = "ap-northeast-1c"
     cidr = "10.10.32.0/20"
   },
   app_sub_1a = {
-    zone = "ap-northeast-2a"
+    zone = "ap-northeast-1a"
     cidr = "10.10.48.0/20"
   },
   app_sub_2c = {
-    zone = "ap-northeast-2c"
+    zone = "ap-northeast-1c"
     cidr = "10.10.64.0/20"
   },
   db_sub_1a = {
-    zone = "ap-northeast-2a"
+    zone = "ap-northeast-1a"
     cidr = "10.10.80.0/20"
   },
   db_sub_2c = {
-    zone = "ap-northeast-2c"
-    cidr = "10.10.96.0/24"
+    zone = "ap-northeast-1c"
+    cidr = "10.10.96.0/20"
   }
 }
 private_subnet_name = "public-subnet"
 
-# fix
 
-az_1 = "ap-northeast-2a"
-az_2 = "ap-northeast-2c"
+
+# fix
+/*
+az_1 = "ap-northeast-1a"
+az_2 = "ap-northeast-1c"
 
 web-subnet1-cidr = "10.0.1.0/24"
 web-subnet1-name = "3-tier-web-subnet-1"
@@ -104,3 +109,4 @@ db-sg-name = "3-tier-db-sg"
 db-subnet-grp-name = "three-tier-db-subnet-group"
 db-password = "rootroot"
 db-username = "rootroot"
+*/

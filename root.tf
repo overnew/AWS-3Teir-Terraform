@@ -33,6 +33,7 @@ module "vpc" {
     project = var.project_name
     owner = var.owner
     part = "vpc"
+    env ="test"
   }
 
   nat_eip_name = var.nat_eip_name
@@ -43,6 +44,7 @@ module "vpc" {
 
   private_subnet_data = var.private_subnet_data
   private_subnet_name = var.private_subnet_name
+
  
  /*
  az_1 = var.az_1

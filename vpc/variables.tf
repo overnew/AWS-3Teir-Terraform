@@ -40,6 +40,9 @@ variable "private_rt_name" {}
 
 variable "private_subnet_data" {}
 variable "private_subnet_name" {}
+variable "default_tag" {
+  
+}
 /*
 variable "instance-type" {
   description = "ec2 Instance type"

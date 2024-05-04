@@ -1,13 +1,6 @@
 #vpc creation#
 
-#기본 태그 정보 정의
-variable "default_tag" {
-  default = {
-    project = var.project_name
-    owner = var.owner
-    part = var.part
-  }
-}
+
 
 resource "aws_vpc" "vpc_name" {
   cidr_block       = var.vpc_cidr_block
@@ -45,7 +38,7 @@ resource "aws_eip" "nat_eip1" {
 
   tags = merge(
     {
-      Name = var.nat_eip_name + "1"
+      Name = format("%s-%s", var.nat_eip_name, "1")
     },
     var.default_tag
   )
@@ -61,7 +54,7 @@ resource "aws_eip" "nat_eip2" {
 
   tags = merge(
     {
-      Name = var.nat_eip_name + "2"
+      Name = format("%s-%s", var.nat_eip_name, "2")
     },
     var.default_tag
   )
@@ -95,11 +88,11 @@ resource "aws_subnet" "public_subnets" {
 #create NGW#
 resource "aws_nat_gateway" "nat_gateway1" {
   allocation_id = aws_eip.nat_eip1.id
-  subnet_id = aws_subnet.public_subnet[var.public_subnet_name +"_1a"].id
+  subnet_id = aws_subnet.public_subnets["pub_sub_1a"].id
 
   tags = merge(
     {
-      Name = var.nat_gw_name + "1"
+      Name = format("%s-%s", var.nat_gw_name, "1")
     },
     var.default_tag
   )
@@ -110,11 +103,11 @@ resource "aws_nat_gateway" "nat_gateway1" {
 
 resource "aws_nat_gateway" "nat_gateway2" {
   allocation_id = aws_eip.nat_eip2.id
-  subnet_id = aws_subnet.public_subnet[var.public_subnet_name +"_2c"].id
+  subnet_id = aws_subnet.public_subnets["pub_sub_2c"].id
 
   tags = merge(
     {
-      Name = var.nat_gw_name + "2"
+      Name = format("%s-%s", var.nat_gw_name, "2")
     },
     var.default_tag
   )
@@ -125,7 +118,7 @@ resource "aws_nat_gateway" "nat_gateway2" {
 
 
 #public route table#
-resource "aws_route_table" "public-rt" {
+resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.vpc_name.id
 
   route {
@@ -142,21 +135,17 @@ resource "aws_route_table" "public-rt" {
 }
 
 #public subnet과 연결
-resource "aws_route_table_association" "public-rt-association1" {
-  subnet_id      = aws_subnet.public_subnets[var.public_subnet_name +"_1a"].id
-  route_table_id = aws_route_table.public-rt.id
-}
-
-
-resource "aws_route_table_association" "public-rt-association2" {
-  subnet_id      = aws_subnet.public_subnets[var.public_subnet_name +"_2c"].id
-  route_table_id = aws_route_table.public-rt.id
+resource "aws_route_table_association" "public" {
+  for_each       = var.public_subnet_data
+  #subnet_id      = aws_subnet.public[each.key].id
+  subnet_id      = aws_subnet.public_subnets[each.key].id
+  route_table_id = aws_route_table.public_rt.id
 }
 
 
 #private subnets
 resource "aws_subnet" "private_subnets" {
-  for_each          = var.public_subnet_data
+  for_each          = var.private_subnet_data
   vpc_id            = aws_vpc.vpc_name.id
   cidr_block        = each.value["cidr"]
   availability_zone = each.value["zone"]
@@ -173,6 +162,30 @@ resource "aws_subnet" "private_subnets" {
     },
     var.default_tag
   )
+}
+
+#private route table
+resource "aws_route_table" "private_rt" {
+  vpc_id = aws_vpc.vpc_name.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.nat_gateway1.id
+  }
+
+  tags = merge(
+    {
+      Name = var.private_rt_name
+    },
+    var.default_tag
+  )
+}
+
+# private route association
+resource "aws_route_table_association" "private" {
+  for_each       = var.private_subnet_data
+  subnet_id      = aws_subnet.private_subnets[each.key].id
+  route_table_id = aws_route_table.private_rt.id
 }
 
 
@@ -231,7 +244,7 @@ resource "aws_db_subnet_group" "database-subnet-group" {
 
 #public route table#
 
-resource "aws_route_table" "public-rt" {
+resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.vpc_name.id
 
   route {
@@ -239,23 +252,23 @@ resource "aws_route_table" "public-rt" {
     gateway_id = aws_internet_gateway.igw.id
   }
   tags = {
-    Name = "public-rt-name"
+    Name = "public_rt-name"
   }
 }
-resource "aws_route_table_association" "public-rt-association1" {
+resource "aws_route_table_association" "public_rt-association1" {
   subnet_id      = aws_subnet.public-subnet-a-1.id
-  route_table_id = aws_route_table.public-rt.id
+  route_table_id = aws_route_table.public_rt.id
 }
 
 
-resource "aws_route_table_association" "public-rt-association2" {
+resource "aws_route_table_association" "public_rt-association2" {
   subnet_id      = aws_subnet.web-subnet-2.id
-  route_table_id = aws_route_table.public-rt.id
+  route_table_id = aws_route_table.public_rt.id
 }
 
 #private route table#
 
-resource "aws_route_table" "private-rt" {
+resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.vpc_name.id
 
   route {
@@ -264,18 +277,18 @@ resource "aws_route_table" "private-rt" {
   }
 
    tags = {
-    Name = "private-rt-name"
+    Name = "private_rt-name"
   }
 }
 
-resource "aws_route_table_association" "private-rt-association1" {
+resource "aws_route_table_association" "private_rt-association1" {
   subnet_id      = aws_subnet.app-subnet-1.id
-  route_table_id = aws_route_table.private-rt.id
+  route_table_id = aws_route_table.private_rt.id
 }
 
-resource "aws_route_table_association" "private-rt-association2" {
+resource "aws_route_table_association" "private_rt-association2" {
   subnet_id      = aws_subnet.app-subnet-2.id
-  route_table_id = aws_route_table.private-rt.id
+  route_table_id = aws_route_table.private_rt.id
 }
 
 resource "aws_subnet" "public-subnet-a1" {
@@ -303,4 +316,26 @@ resource "aws_subnet" "web-subnet-2" {
     Name = var.web-subnet2-name
   }
 }
+
+resource "aws_route_table_association" "public_rt_association1" {
+  subnet_id      = aws_subnet.public_subnets[var.public_subnet_name +"_1a"].id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+
+resource "aws_route_table_association" "public_rt_association2" {
+  subnet_id      = aws_subnet.public_subnets[var.public_subnet_name +"_2c"].id
+  route_table_id = aws_route_table.public_rt.id
+}
+resource "aws_route_table_association" "private_rt-association1" {
+  subnet_id      = aws_subnet.app-subnet-1.id
+  route_table_id = aws_route_table.private_rt.id
+}
+
+resource "aws_route_table_association" "private_rt-association2" {
+  subnet_id      = aws_subnet.app-subnet-2.id
+  route_table_id = aws_route_table.private_rt.id
+}
+
+# public route association
 */
