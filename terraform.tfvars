@@ -63,50 +63,10 @@ private_subnet_name = "public-subnet"
 
 
 
-# fix
-/*
-az_1 = "ap-northeast-1a"
-az_2 = "ap-northeast-1c"
+#Security Group
+web_alb_sg_name = "web_alb_sg"
+app_alb_sg_name = "app_alb_sg"
 
-web-subnet1-cidr = "10.0.1.0/24"
-web-subnet1-name = "3-tier-web-subnet-1"
-web-subnet2-cidr = "10.0.2.0/24"
-web-subnet2-name = "3-tier-web-subnet-2"
-
-app-subnet1-cidr = "10.0.3.0/24"
-app-subnet1-name = "3-tier-app-subnet-1"
-app-subnet2-cidr = "10.0.4.0/24"
-app-subnet2-name = "3-tier-app-subnet-2"
-
-db-subnet1-cidr = "10.0.5.0/24"
-db-subnet1-name = "3-tier-db-subnet-1"
-db-subnet2-cidr = "10.0.6.0/24"
-db-subnet2-name = "3-tier-db-subnet-2"
-
-
-key-name = "3tier-key"
-
-image-id = "ami-09a7535106fbd42d5"  #최신 우분투 AMI
-instance-type = "t2.micro"
-instance-type-db = "db.t3.micro"
-
-launch-template-web-name = "3-tier-web-launch-template"
-alb-web-name = "3-tier-web-alb"
-alb-sg-web-name = "3-tier-web-alb-sg"
-asg-web-name = "3-tier-web-asg"
-asg-sg-web-name = "3-tier-web-asg-sg"
-tg-web-name = "3-tier-web-tg"
-
-launch-template-app-name = "3-tier-app-launch-template"
-alb-app-name = "3-tier-app-alb"
-alb-sg-app-name = "3-tier-app-alb-sg"
-asg-app-name = "3-tier-app-asg"
-asg-sg-app-name = "3-tier-app-asg-sg"
-tg-app-name = "3-tier-app-tg"
-
-db-name = "rdsdb"
-db-sg-name = "3-tier-db-sg"
-db-subnet-grp-name = "three-tier-db-subnet-group"
-db-password = "rootroot"
-db-username = "rootroot"
-*/
+web_asg_security_group_name = "web_asg_security_group"
+app_asg_security_group_name = "app_asg_security_group"
+db_sg_name = "db_sg"

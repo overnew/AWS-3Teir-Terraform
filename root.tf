@@ -13,9 +13,6 @@ provider "aws" {
   region  = var.region
 }
 
-
-
-
 module "vpc" {
   source = "./vpc"
 
@@ -44,31 +41,26 @@ module "vpc" {
 
   private_subnet_data = var.private_subnet_data
   private_subnet_name = var.private_subnet_name
+}
 
- 
- /*
- az_1 = var.az_1
- az_2 = var.az_2
+module "security_groups" {
+  source = "./sg"
 
- web-subnet1-cidr = var.web-subnet1-cidr
- web-subnet1-name = var.web-subnet1-name
+  #out put을 통해 vpc_id 사용
+  vpc_id = module.vpc.vpc_id
 
- 
- web-subnet2-cidr = var.web-subnet2-cidr
- web-subnet2-name = var.web-subnet2-name
+  default_tag = {
+    project = var.project_name
+    owner = var.owner
+    part = "sg"
+    env ="test"
+  }
 
- app-subnet1-cidr = var.app-subnet1-cidr
- app-subnet1-name = var.app-subnet1-name
- app-subnet2-cidr = var.app-subnet2-cidr
- app-subnet2-name = var.app-subnet2-name
-
- db-subnet1-cidr = var.db-subnet1-cidr
- db-subnet1-name = var.db-subnet1-name
- db-subnet2-cidr = var.db-subnet2-cidr
- db-subnet2-name = var.db-subnet2-name
- 
- public-rt-name = var.public-rt-name
- private-rt-name = var.private-rt-name*/
+  web_alb_sg_name = var.web_alb_sg_name
+  app_alb_sg_name = var.app_alb_sg_name
+  web_asg_security_group_name = var.web_asg_security_group_name
+  app_asg_security_group_name = var.app_asg_security_group_name
+  db_sg_name = var.db_sg_name
 }
 
 /*

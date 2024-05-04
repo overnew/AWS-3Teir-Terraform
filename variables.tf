@@ -41,7 +41,12 @@ variable "private_subnet_data" {}
 variable "private_subnet_name" {}
 
 
-#커스텀 시작
+#보안 그룹
+variable "web_alb_sg_name" {}
+variable "app_alb_sg_name" {}
+variable "web_asg_security_group_name" {}
+variable "app_asg_security_group_name" {}
+variable "db_sg_name" {}
 
 
 /*
