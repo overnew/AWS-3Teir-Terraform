@@ -64,7 +64,7 @@ module "security_groups" {
 }
 
 
-module "3tier" {
+module "web_service" {
   source = "./3tier"
 
   web_asg_security_group_id = module.security_groups.web_asg_security_group_id
@@ -83,7 +83,7 @@ module "3tier" {
   db_subnet_ids = module.vpc.db_subnet_ids
 
  web_alb_name = var.web_alb_name
- app_alb_name = var.web_alb_name
+ app_alb_name = var.app_alb_name
  web_asg_name = var.web_asg_name
  app_asg_name = var.app_asg_name
  web_launch_template_name = var.web_launch_template_name

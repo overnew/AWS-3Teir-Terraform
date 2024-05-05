@@ -101,7 +101,7 @@ resource "aws_launch_template" "web_launch_template" {
   image_id      = var.image_id
   instance_type = var.instance_type
   key_name      = var.key_name
-  user_data     = filebase64("${path.module}/web_userdata.sh")
+  user_data     = filebase64("${path.module}/userdata/web_userdata.sh")
 
   network_interfaces {
     device_index    = 0
@@ -127,7 +127,7 @@ resource "aws_launch_template" "app_launch_template" {
   image_id      = var.image_id
   instance_type = var.instance_type
   key_name      = var.key_name
-  user_data     = filebase64("${path.module}/app_userdata.sh")
+  user_data     = filebase64("${path.module}/userdata/app_userdata.sh")
 
   network_interfaces {
     device_index    = 0
@@ -196,7 +196,7 @@ resource "aws_lb_listener" "my_app_alb_listener" {
 }
 
 #database instance#
-
+/*
 resource "aws_db_instance" "database" {
   allocated_storage    = 10
   db_name              = var.db_name
@@ -209,7 +209,7 @@ resource "aws_db_instance" "database" {
   skip_final_snapshot  = true
   multi_az = true
   vpc_security_group_ids = [var.db_sg_id]
-  db_subnet_group_name = aws_db_subnet_group.database-subnet-group.name
+  db_subnet_group_name = aws_db_subnet_group.database_subnet_group.name
   tags = merge(
     {
       Name = var.db_name
@@ -230,3 +230,4 @@ resource "aws_db_subnet_group" "database_subnet_group" {
     var.default_tag
   ) 
 }
+*/

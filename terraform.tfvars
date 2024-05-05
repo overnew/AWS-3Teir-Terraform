@@ -78,8 +78,11 @@ web_asg_name = "web-asg"
 app_asg_name = "app-asg"
 web_launch_template_name = "web-launch-template"
 app_launch_template_name = "app-launch-template"
-image_id = "ami-09a7535106fbd42d5"  #최신 우분투 AMI
+image_id = "ami-0595d6e81396a9efb"  #최신 우분투 AMI
 instance_type = "t2.micro"
+
+key_name = "ldj-ec2-test-key"
+
 db_name = "3tier-db"
 instance_type_db = "db.t3.micro"
 db_username = "rootroot"

@@ -55,7 +55,6 @@ variable "web_asg_name" {}
 variable "app_asg_name" {}
 variable "web_launch_template_name" {}
 variable "app_launch_template_name" {}
-variable "database" {}
 
 
 variable "image_id" {}
