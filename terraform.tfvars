@@ -88,3 +88,7 @@ instance_type_db = "db.t3.micro"
 db_username = "rootroot"
 db_password = "rootroot"
 db_subnet_group_name = "db-subnet-group"
+
+
+secretsmanager_vpc_endpoint_sg_name = "secretsmanager_vpc_endpoint_sg"
+secretsmanager_endpoint_name = "secretsmanager_endpoint_name"

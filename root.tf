@@ -106,6 +106,13 @@ module "web_service" {
     part = "3tier"
     env ="test"
   }
+
+  #vpc endpoint
+  region = var.region
+  vpc_cidr_block = var.vpc_cidr_block
+
+  secretsmanager_vpc_endpoint_sg_name = var.secretsmanager_vpc_endpoint_sg_name
+  secretsmanager_endpoint_name = var.secretsmanager_endpoint_name
 }
 
 /*

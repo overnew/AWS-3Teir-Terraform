@@ -69,6 +69,12 @@ variable "db_password" {}
 variable "db_subnet_group_name" {}
 
 
+
+#vpc endpoint part
+
+variable "secretsmanager_vpc_endpoint_sg_name" {}
+variable "secretsmanager_endpoint_name" {}
+
 /*
 
 

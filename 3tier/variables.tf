@@ -1,3 +1,6 @@
+#태그
+variable "default_tag" {}
+
 # SG 모듈에서 가져옴
 variable "web_asg_security_group_id" {}
 variable "app_asg_security_group_id" {}
@@ -34,5 +37,11 @@ variable "db_username" {}
 variable "db_password" {}
 variable "db_subnet_group_name" {}
 
-#태그
-variable "default_tag" {}
+
+#vpc endpoint part
+
+variable "region" {}
+variable "vpc_cidr_block" {}
+
+variable "secretsmanager_vpc_endpoint_sg_name" {}
+variable "secretsmanager_endpoint_name" {}
