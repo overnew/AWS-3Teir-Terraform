@@ -63,9 +63,32 @@ module "security_groups" {
   db_sg_name = var.db_sg_name
 }
 
+module "ecs" {
+  source = "./ecs"
+
+  default_tag = {
+    project = var.project_name
+    owner = var.owner
+    part = "ecs"
+    env ="test"
+  }
+
+  vpc_id = module.vpc.vpc_id
+  public_subnet_ids = module.vpc.public_subnet_ids
+  private_subnet_ids = module.vpc.private_subnet_ids
+
+  web_subnet_ids = module.vpc.web_subnet_ids
+  app_subnet_ids = module.vpc.app_subnet_ids
+  db_subnet_ids = module.vpc.db_subnet_ids
+  web_alb_sg_id = module.security_groups.web_alb_sg_id
+
+
+}
+
 
 module "web_service" {
   source = "./3tier"
+  count = 0  #3tier변경
 
   web_asg_security_group_id = module.security_groups.web_asg_security_group_id
   app_asg_security_group_id = module.security_groups.app_asg_security_group_id
@@ -114,6 +137,7 @@ module "web_service" {
   secretsmanager_vpc_endpoint_sg_name = var.secretsmanager_vpc_endpoint_sg_name
   secretsmanager_endpoint_name = var.secretsmanager_endpoint_name
 }
+
 
 /*
 

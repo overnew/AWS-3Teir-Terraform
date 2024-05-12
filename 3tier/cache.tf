@@ -1,3 +1,4 @@
+/*
 resource "aws_elasticache_cluster" "elastic_cache" {
   cluster_id           = "cluster-example"
   engine               = "memcached"
@@ -40,3 +41,4 @@ resource "aws_security_group" "elastic_cache" {
   }
 
 }
+*/
