@@ -81,7 +81,7 @@ module "ecs" {
   app_subnet_ids = module.vpc.app_subnet_ids
   db_subnet_ids = module.vpc.db_subnet_ids
   web_alb_sg_id = module.security_groups.web_alb_sg_id
-
+  app_alb_sg_id = module.security_groups.web_alb_sg_id
 
 }
 
