@@ -45,7 +45,7 @@ resource "aws_eip" "nat_eip1" {
     var.default_tag
   )
 }
-
+/*
 resource "aws_eip" "nat_eip2" {
   domain     = "vpc"
 
@@ -61,7 +61,7 @@ resource "aws_eip" "nat_eip2" {
     var.default_tag
   )
 }
-
+*/
 
 #public subnets
 resource "aws_subnet" "public_subnets" {
@@ -102,7 +102,7 @@ resource "aws_nat_gateway" "nat_gateway1" {
   # igw가 생성된 후에 생성
   depends_on = [aws_internet_gateway.igw]
 }
-
+/*
 resource "aws_nat_gateway" "nat_gateway2" {
   allocation_id = aws_eip.nat_eip2.id
   subnet_id = aws_subnet.public_subnets["pub_sub_2c"].id
@@ -116,7 +116,7 @@ resource "aws_nat_gateway" "nat_gateway2" {
   
   # igw가 생성된 후에 생성
   depends_on = [aws_internet_gateway.igw]
-}
+}*/
 
 
 #public route table#

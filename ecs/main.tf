@@ -10,10 +10,10 @@ locals {
 resource "aws_ecs_cluster" "web_service" {
   name = local.cluster_name
 
-  #setting {   # 컨테이너 지표 감시 가능
-  #  name  = "containerInsights"
-  #  value = "enabled"
-  #}
+  setting {   # 컨테이너 지표 감시 가능
+    name  = "containerInsights"
+    value = "enabled"
+  }
 
   tags = merge(
     {
@@ -35,7 +35,8 @@ resource "aws_ecs_task_definition" "web_task" {
     {
       name      = "first"
     #image 주소
-      image     = "851725230407.dkr.ecr.ap-northeast-1.amazonaws.com/name:apache" 
+      image     = "public.ecr.aws/nginx/nginx:1.26-alpine-perl" 
+      #"851725230407.dkr.ecr.ap-northeast-1.amazonaws.com/name:apache" 
       #cpu       = 10
       #memory    = 512
       essential = true
@@ -45,6 +46,16 @@ resource "aws_ecs_task_definition" "web_task" {
           hostPort      = 80
         }
       ]
+      logConfiguration: {
+        logDriver: "awslogs",
+        options: {
+          awslogs-group: "/ecs/service",
+          awslogs-region: "ap-northeast-1",
+          awslogs-stream-prefix: "ecs-webserver"
+          awslogs-create-group : "true"
+        }
+      }
+
       "healthCheck"  : {
           "command"     : [ "CMD-SHELL", "curl -f http://localhost:80/ || exit 1" ],
           "interval"    : 30,
@@ -81,6 +92,7 @@ resource "aws_ecs_task_definition" "web_task" {
   }*/
 
   task_role_arn = aws_iam_role.ecs_task_role.arn
+  execution_role_arn = aws_iam_role.ecs_task_role.arn
 
   tags = merge(
     {
@@ -105,6 +117,9 @@ resource "aws_ecs_service" "web_service" {
   #  type  = "binpack"
   #  field = "cpu"
   #}
+    deployment_controller {
+    type = "CODE_DEPLOY"
+  }
   
   network_configuration {
     subnets           = [var.web_subnet_ids[0],var.web_subnet_ids[1]]
@@ -125,6 +140,122 @@ resource "aws_ecs_service" "web_service" {
   #}
 }
 
+/*
+#ecs task auto scaling
+resource "aws_appautoscaling_target" "ecs_web_target" {
+  max_capacity       = 4
+  min_capacity       = 1
+  resource_id        = "service/${aws_ecs_cluster.web_service.name}/${aws_ecs_service.web_service.name}" 
+  #"service/${var.cluster_name}/${var.name_ecs_service}"
+
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+resource "aws_appautoscaling_policy" "ecs_web_scale_out" {
+  
+  name               = "${local.web_name}-auto-scaling-out"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_web_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_web_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_web_target.service_namespace
+
+  #StepScaling
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+
+    #cooldown은 스케일링 후 다음 스케일링까지의 유예 시간
+    cooldown                = 3
+
+    #Average가 default
+    metric_aggregation_type = "Average" #"Maximum"
+
+    step_adjustment {
+      metric_interval_lower_bound = 0
+      #metric_interval_upper_bound = 60
+
+      #scaling 개수, 음 or 양
+      scaling_adjustment          = 1
+    }
+  }
+
+  depends_on = [ aws_appautoscaling_target.ecs_web_target ]
+}
+
+
+# scaling out 알람
+resource "aws_cloudwatch_metric_alarm" "outscaling_metric_alarm" {
+  
+  alarm_name          = "${local.web_name}-outscaling-metric-alarm"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = "60"
+
+  dimensions = {
+    ClusterName = "${aws_ecs_cluster.web_service.name}"
+    ServiceName = "${aws_ecs_service.web_service.name}"
+  }
+
+  #이 알람이 scaling policy을 트리거한다.
+  alarm_actions = ["${aws_appautoscaling_policy.ecs_web_scale_out.arn}"]
+}
+
+
+resource "aws_appautoscaling_policy" "ecs_web_scale_in" {
+  
+  name               = "${local.web_name}-auto-scaling-in"
+  policy_type        = "StepScaling"
+  resource_id        = aws_appautoscaling_target.ecs_web_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ecs_web_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ecs_web_target.service_namespace
+
+  #StepScaling
+  step_scaling_policy_configuration {
+    adjustment_type         = "ChangeInCapacity"
+
+    #cooldown은 스케일링 후 다음 스케일링까지의 유예 시간
+    cooldown                = 3
+
+    #Average가 default
+    metric_aggregation_type = "Average" #"Maximum"
+
+    step_adjustment {
+      metric_interval_lower_bound = 0
+      #metric_interval_upper_bound = 60
+
+      #scaling 개수, 음 or 양
+      scaling_adjustment          = -1
+    }
+  }
+
+  depends_on = [ aws_appautoscaling_target.ecs_web_target ]
+}
+
+# scaling in 알람
+resource "aws_cloudwatch_metric_alarm" "inscaling_metric_alarm" {
+  
+  alarm_name          = "${local.web_name}-inscaling-metric-alarm"
+  comparison_operator = "LessThanOrEqualToThreshold"  # 임계치보다 낮은 경우 트리거
+  evaluation_periods  = "1"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = "30"
+  statistic           = "Average"
+  threshold           = "20"
+
+  dimensions = {
+    ClusterName = "${aws_ecs_cluster.web_service.name}"
+    ServiceName = "${aws_ecs_service.web_service.name}"
+  }
+
+  #이 알람이 scaling policy을 트리거한다.
+  alarm_actions = ["${aws_appautoscaling_policy.ecs_web_scale_in.arn}"]
+}
+*/
 
 resource "aws_ecs_task_definition" "app_task" {
   family = "service"
@@ -138,7 +269,7 @@ resource "aws_ecs_task_definition" "app_task" {
     {
       name      = "app"
     #image 주소
-      image     = "public.ecr.aws/lts/apache2:2.4-20.04_beta" 
+      image     = "public.ecr.aws/nginx/nginx:1.26-alpine-perl" #"public.ecr.aws/lts/apache2:2.4-20.04_beta" 
       #cpu       = 10
       #memory    = 512
       essential = true
@@ -154,13 +285,13 @@ resource "aws_ecs_task_definition" "app_task" {
           "timeout"     : 5,
           "startPeriod" : 10,
           "retries"     :3
-        }
+      }
 
     }
   ])
 
   task_role_arn = aws_iam_role.ecs_task_role.arn
-
+  execution_role_arn = aws_iam_role.ecs_task_role.arn
   tags = merge(
     {
       Name = format("%s-%s",local.app_name ,"task") 
@@ -177,6 +308,10 @@ resource "aws_ecs_service" "app_service" {
   launch_type                         = "FARGATE"
   scheduling_strategy                 = "REPLICA"
   
+  deployment_controller {
+    type = "CODE_DEPLOY"
+  }
+
   network_configuration {
     subnets           = [var.app_subnet_ids[0], var.app_subnet_ids[1]]
     assign_public_ip  = false
@@ -225,8 +360,10 @@ resource "aws_iam_role" "ecs_task_role" {
                 "ecr:BatchCheckLayerAvailability",
                 "ecr:GetDownloadUrlForLayer",
                 "ecr:BatchGetImage",
+                "logs:CreateLogGroup",   #로그 그룹도 생성할 수 있도록 수정
                 "logs:CreateLogStream",
-                "logs:PutLogEvents"
+                "logs:PutLogEvents",
+                "logs:DescribeLogStreams"
             ],
             "Resource": "*"
         }

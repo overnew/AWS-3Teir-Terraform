@@ -71,6 +71,71 @@ resource "aws_lb_listener" "web_listener" {
   ) 
 }
 
+resource "aws_lb_listener" "web_listener2" {
+  load_balancer_arn         = aws_alb.web_alb.arn
+  port                      = "8080"
+  protocol                  = "HTTP"
+
+  default_action {
+    type                    = "forward"
+    target_group_arn        = aws_lb_target_group.web_target_group2.arn
+  }
+
+  tags = merge(
+    {
+      Name = local.web_listener_name
+    },
+    var.default_tag
+  ) 
+}
+
+resource "aws_lb_target_group" "web_target_group2" {
+  name                      = "web-target-group2"
+  port                      = 80
+  protocol                  = "HTTP"
+  target_type               = "ip"
+  vpc_id                    = var.vpc_id
+  health_check {
+      path                  = "/"
+      protocol              = "HTTP"
+      matcher               = "200"
+      port                  = "traffic-port"
+      healthy_threshold     = 2
+      unhealthy_threshold   = 2
+      timeout               = 10
+      interval              = 30
+  }
+
+   tags = merge(
+    {
+      Name = "web-target-group2"
+    },
+    var.default_tag
+  ) 
+}
+
+resource "aws_lb_listener_rule" "web_rule2" {
+  listener_arn = aws_lb_listener.web_listener2.arn
+  priority     = 110
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.web_target_group2.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/*"]
+    }
+  }
+
+  #condition {
+  #  host_header {
+  #    values = ["example.com"]
+  #  }
+  #}
+}
+
 resource "aws_lb_listener_rule" "web_rule" {
   listener_arn = aws_lb_listener.web_listener.arn
   priority     = 100
