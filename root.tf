@@ -139,6 +139,69 @@ module "web_service" {
 }
 
 
+module "codepipe_web" {
+  depends_on = [ module.ecs ]
+  source = "./cicd"
+  
+  region = var.region
+  project_name = "web-ci-cd"
+  user_id = var.user_id
+
+  create_new_repo = true
+
+  source_repository_name = "ldj-web-repository"
+  source_repository_branch = "main"
+
+  build_name = "ci-cd-builder"
+  deploy_name = "ci-cd-deploy"
+ 
+
+  deploy_targaet_ecs_cluster_name = module.ecs.web_ecs_cluster_name
+  deploy_targaet_ecs_cluster_arn  = module.ecs.web_ecs_cluster_arn
+  deploy_targaet_ecs_service_name = module.ecs.web_ecs_service_name
+  
+  deploy_targaet_lb_arn = module.ecs.lb_arn
+  deploy_targaet_lb_lisnter_arn   = module.ecs.lb_lisnter_arn
+  deploy_targaet_lb_test_lisnter_arn = module.ecs.lb_test_lisnter_arn
+  deploy_targaet_lb_target_group_name = module.ecs.web_lb_target_group_name
+  deploy_targaet_lb_test_target_group_name = module.ecs.web_lb_test_target_group_name
+
+  listener_port = 80
+  test_listener_port = 8080
+}
+
+
+module "codepipe_app" {
+  depends_on = [ module.ecs ]
+  source = "./cicd"
+  
+  region = var.region
+  project_name = "app-ci-cd"
+  user_id = var.user_id
+
+  create_new_repo = true
+
+  source_repository_name = "ldj-app-repository"
+  source_repository_branch = "main"
+
+  build_name = "ci-cd-builder"
+  deploy_name = "ci-cd-deploy"
+ 
+
+  deploy_targaet_ecs_cluster_name = module.ecs.app_ecs_cluster_name
+  deploy_targaet_ecs_cluster_arn  = module.ecs.app_ecs_cluster_arn
+  deploy_targaet_ecs_service_name = module.ecs.app_ecs_service_name
+  
+  deploy_targaet_lb_arn = module.ecs.lb_arn
+  deploy_targaet_lb_lisnter_arn   = module.ecs.lb_lisnter_arn
+  deploy_targaet_lb_test_lisnter_arn = module.ecs.lb_test_lisnter_arn
+  deploy_targaet_lb_target_group_name = module.ecs.app_lb_target_group_name
+  deploy_targaet_lb_test_target_group_name = module.ecs.app_lb_test_target_group_name
+
+  listener_port = 80
+  test_listener_port = 8080
+}
+
 /*
 
 #web security group#

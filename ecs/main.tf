@@ -1,14 +1,14 @@
 #cluster
 
 locals {
-  cluster_name = "web-serivce-ecs"
-  web_name = "web-server"
-  app_name = "app-server"
+  web_cluster_name = "web-ecs"
+  web_name = "web-service"
+  web_service_family_name = "web-service"
 }
 
 #cluster
-resource "aws_ecs_cluster" "web_service" {
-  name = local.cluster_name
+resource "aws_ecs_cluster" "web_cluster" {
+  name = local.web_cluster_name
 
   setting {   # 컨테이너 지표 감시 가능
     name  = "containerInsights"
@@ -17,14 +17,14 @@ resource "aws_ecs_cluster" "web_service" {
 
   tags = merge(
     {
-      Name = format("%s-%s",local.cluster_name ,"Cluster")
+      Name = format("%s-%s",local.web_cluster_name ,"cluster")
     },
     var.default_tag
   )
 }
 
 resource "aws_ecs_task_definition" "web_task" {
-  family = "service"
+  family = local.web_service_family_name
   requires_compatibilities = ["FARGATE"]
   cpu                                 = "256"
   memory                              = "512"
@@ -33,7 +33,7 @@ resource "aws_ecs_task_definition" "web_task" {
   #definition은 파일로 만들 수 있음 file("task-definitions/service.json")
   container_definitions = jsonencode([
     {
-      name      = "first"
+      name      = "web"
     #image 주소
       image     = "public.ecr.aws/nginx/nginx:1.26-alpine-perl" 
       #"851725230407.dkr.ecr.ap-northeast-1.amazonaws.com/name:apache" 
@@ -104,7 +104,7 @@ resource "aws_ecs_task_definition" "web_task" {
 
 resource "aws_ecs_service" "web_service" {
   name            = local.web_name
-  cluster         = aws_ecs_cluster.web_service.id
+  cluster         = aws_ecs_cluster.web_cluster.id
   task_definition = aws_ecs_task_definition.web_task.arn
   desired_count   = 2
   launch_type                         = "FARGATE"
@@ -129,10 +129,10 @@ resource "aws_ecs_service" "web_service" {
   
   load_balancer {
     target_group_arn = aws_lb_target_group.web_target_group.arn
-    container_name   = "first"
+    container_name   = "web"
     container_port   = 80
   }
-  depends_on  = [aws_lb_listener.web_listener]
+  depends_on  = [aws_lb_listener.service_listener]
 
   #placement_constraints {
   #  type       = "memberOf"
@@ -145,8 +145,8 @@ resource "aws_ecs_service" "web_service" {
 resource "aws_appautoscaling_target" "ecs_web_target" {
   max_capacity       = 4
   min_capacity       = 1
-  resource_id        = "service/${aws_ecs_cluster.web_service.name}/${aws_ecs_service.web_service.name}" 
-  #"service/${var.cluster_name}/${var.name_ecs_service}"
+  resource_id        = "service/${aws_ecs_cluster.web_cluster.name}/${aws_ecs_service.web_service.name}" 
+  #"service/${var.web_cluster_name}/${var.name_ecs_service}"
 
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
@@ -196,7 +196,7 @@ resource "aws_cloudwatch_metric_alarm" "outscaling_metric_alarm" {
   threshold           = "60"
 
   dimensions = {
-    ClusterName = "${aws_ecs_cluster.web_service.name}"
+    ClusterName = "${aws_ecs_cluster.web_cluster.name}"
     ServiceName = "${aws_ecs_service.web_service.name}"
   }
 
@@ -248,7 +248,7 @@ resource "aws_cloudwatch_metric_alarm" "inscaling_metric_alarm" {
   threshold           = "20"
 
   dimensions = {
-    ClusterName = "${aws_ecs_cluster.web_service.name}"
+    ClusterName = "${aws_ecs_cluster.web_cluster.name}"
     ServiceName = "${aws_ecs_service.web_service.name}"
   }
 
@@ -256,76 +256,6 @@ resource "aws_cloudwatch_metric_alarm" "inscaling_metric_alarm" {
   alarm_actions = ["${aws_appautoscaling_policy.ecs_web_scale_in.arn}"]
 }
 */
-
-resource "aws_ecs_task_definition" "app_task" {
-  family = "service"
-  requires_compatibilities = ["FARGATE"]
-  cpu                                 = "256"
-  memory                              = "512"
-  network_mode             = "awsvpc"
-
-  #definition은 파일로 만들 수 있음 file("task-definitions/service.json")
-  container_definitions = jsonencode([
-    {
-      name      = "app"
-    #image 주소
-      image     = "public.ecr.aws/nginx/nginx:1.26-alpine-perl" #"public.ecr.aws/lts/apache2:2.4-20.04_beta" 
-      #cpu       = 10
-      #memory    = 512
-      essential = true
-      portMappings = [
-        {
-          containerPort = 80
-          hostPort      = 80
-        }
-      ]
-      "healthCheck"  : {
-          "command"     : [ "CMD-SHELL", "curl -f http://localhost:80/ || exit 1" ],
-          "interval"    : 30,
-          "timeout"     : 5,
-          "startPeriod" : 10,
-          "retries"     :3
-      }
-
-    }
-  ])
-
-  task_role_arn = aws_iam_role.ecs_task_role.arn
-  execution_role_arn = aws_iam_role.ecs_task_role.arn
-  tags = merge(
-    {
-      Name = format("%s-%s",local.app_name ,"task") 
-    },
-    var.default_tag
-  )
-}
-
-resource "aws_ecs_service" "app_service" {
-  name            = local.app_name
-  cluster         = aws_ecs_cluster.web_service.id
-  task_definition = aws_ecs_task_definition.app_task.arn
-  desired_count   = 2
-  launch_type                         = "FARGATE"
-  scheduling_strategy                 = "REPLICA"
-  
-  deployment_controller {
-    type = "CODE_DEPLOY"
-  }
-
-  network_configuration {
-    subnets           = [var.app_subnet_ids[0], var.app_subnet_ids[1]]
-    assign_public_ip  = false
-    security_groups   = [var.web_alb_sg_id]  #일단 web sg로
-  }
-  
-  load_balancer {
-    target_group_arn = aws_lb_target_group.app_target_group.arn
-    container_name   = "app"
-    container_port   = 80
-  }
-  depends_on  = [aws_lb_listener.web_listener]
-
-}
 
 resource "aws_iam_role" "ecs_task_role" {
   name = "ecs-task-role"

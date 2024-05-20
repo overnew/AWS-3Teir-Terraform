@@ -6,6 +6,7 @@ variable "owner" {
   description = "resource creator"
 }
 
+variable "user_id" {}
 
 
 variable "region" {
