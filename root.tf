@@ -19,6 +19,7 @@ module "vpc" {
  project_name = var.project_name
  owner = var.project_name
  part =  "vpc"
+ region = var.region
 
  vpc_name = var.vpc_name
  vpc_cidr_block = var.vpc_cidr_block
@@ -41,6 +42,8 @@ module "vpc" {
 
   private_subnet_data = var.private_subnet_data
   private_subnet_name = var.private_subnet_name
+
+  endpoint_sg_id = module.security_groups.endpoint_sg_id
 }
 
 module "security_groups" {
@@ -55,6 +58,10 @@ module "security_groups" {
     part = "sg"
     env ="test"
   }
+
+  #name의 post fix
+  part = "SG"
+  vpc_cidr_block = var.vpc_cidr_block
 
   web_alb_sg_name = var.web_alb_sg_name
   app_alb_sg_name = var.app_alb_sg_name
@@ -149,7 +156,7 @@ module "codepipe_web" {
 
   create_new_repo = true
 
-  source_repository_name = "ldj-web-repository"
+  source_repository_name = "ldj-web-repo"
   source_repository_branch = "main"
 
   build_name = "ci-cd-builder"
@@ -181,7 +188,7 @@ module "codepipe_app" {
 
   create_new_repo = true
 
-  source_repository_name = "ldj-app-repository"
+  source_repository_name = "ldj-app-repo"
   source_repository_branch = "main"
 
   build_name = "ci-cd-builder"

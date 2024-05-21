@@ -3,7 +3,9 @@ variable "vpc_id" {
 }
 
 variable "default_tag" {}
+variable "part" {}
 
+variable "vpc_cidr_block" {}
 
 variable "web_alb_sg_name" {}
 variable "app_alb_sg_name" {}

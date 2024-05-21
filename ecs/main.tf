@@ -293,7 +293,17 @@ resource "aws_iam_role" "ecs_task_role" {
                 "logs:CreateLogGroup",   #로그 그룹도 생성할 수 있도록 수정
                 "logs:CreateLogStream",
                 "logs:PutLogEvents",
-                "logs:DescribeLogStreams"
+                "logs:DescribeLogStreams",
+                "dynamodb:BatchGetItem",  #dynamo 권한 추가
+                "dynamodb:Describe*",
+                "dynamodb:List*",
+                "dynamodb:GetItem",
+                "dynamodb:GetResourcePolicy",
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:PartiQLSelect",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem"
             ],
             "Resource": "*"
         }

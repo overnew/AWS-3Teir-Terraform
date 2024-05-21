@@ -1,7 +1,8 @@
-#locals {
+locals {
 #  public_sg  = format("%s-%s-sg", var.name, "public")
 #  private_sg = format("%s-%s-sg", var.name, "private")
-#}
+  endpoint_sg_name = "endpoint-${var.part}"
+}
 
 
 resource "aws_security_group" "web_alb_sg" {
@@ -166,4 +167,35 @@ resource "aws_security_group" "db_sg" {
     },
     var.default_tag
   )
+}
+
+
+#Interface endpoint SG
+resource "aws_security_group" "vpc_endpoint_sg" {
+  name = local.endpoint_sg_name
+  vpc_id = var.vpc_id
+
+  #https 트래픽만 받음
+  ingress {
+    from_port = 443
+    to_port = 443
+    protocol = "TCP"
+
+    cidr_blocks = [var.vpc_cidr_block]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [var.vpc_cidr_block]
+    description = "Internal outbound any traffic"
+  }
+
+  tags = merge(
+    {
+      Name = local.endpoint_sg_name
+    },
+    var.default_tag
+  )  
 }

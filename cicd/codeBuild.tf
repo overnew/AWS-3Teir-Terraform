@@ -4,7 +4,7 @@ locals {
 
 # codebuild
 resource "aws_codebuild_project" "this" {
-  depends_on = [ aws_codecommit_repository.source_repository ]
+  depends_on = [ data.aws_codecommit_repository.source_repository ]
   name          = local.build_name  #"${var.project_name}-build"
   build_timeout = 6
   service_role  =  aws_iam_role.build_task_role.arn #module.iam.iam_role_arn

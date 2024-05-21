@@ -11,7 +11,7 @@ variable "part" {
 }
 
 
-
+variable "region" {}
 
 variable "vpc_name" {
     description = "vpc name"
@@ -43,6 +43,11 @@ variable "private_subnet_name" {}
 variable "default_tag" {
   
 }
+
+variable "endpoint_sg_id" {
+  description = "vpc interface endpoint" 
+}
+
 /*
 variable "instance-type" {
   description = "ec2 Instance type"

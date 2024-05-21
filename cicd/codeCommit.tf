@@ -1,4 +1,10 @@
 
+#삭제 방지를 위해 생성된 repo를 이용
+data "aws_codecommit_repository" "source_repository" {
+  repository_name = var.source_repository_name
+}
+
+/*
 resource "aws_codecommit_repository" "source_repository" {
   count           = var.create_new_repo ? 1 : 0
   repository_name = var.source_repository_name
@@ -35,3 +41,4 @@ resource "aws_codecommit_approval_rule_template_association" "source_repository_
 
 
 }
+*/
