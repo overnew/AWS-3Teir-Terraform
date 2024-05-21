@@ -1,6 +1,6 @@
 project_name = "again"
 owner = "ldj"
-user_id = "851725230407"
+user_id = ""
 
 #기본 태그 정보 정의
 
