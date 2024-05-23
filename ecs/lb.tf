@@ -150,7 +150,8 @@ resource "aws_lb_listener" "test_listener" {
 
   default_action {
     type                    = "forward"
-    target_group_arn        = aws_lb_target_group.web_test_target_group.arn
+    #target_group_arn        = aws_lb_target_group.web_test_target_group.arn
+    target_group_arn        = aws_lb_target_group.web_target_group.arn  
   }
 
   tags = merge(
@@ -192,6 +193,7 @@ resource "aws_lb_listener_rule" "web_test_rule" {
 
   action {
     type             = "forward"
+    #target_group_arn = aws_lb_target_group.web_test_target_group.arn
     target_group_arn = aws_lb_target_group.web_test_target_group.arn
   }
 
@@ -241,7 +243,8 @@ resource "aws_lb_listener_rule" "app_test_rule" {
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.app_test_target_group.arn
+    #target_group_arn = aws_lb_target_group.app_test_target_group.arn
+    target_group_arn = aws_lb_target_group.app_target_group.arn
   }
 
   condition {

@@ -140,7 +140,9 @@ resource "aws_ecs_service" "web_service" {
   #}
 }
 
-/*
+
+
+#### auto
 #ecs task auto scaling
 resource "aws_appautoscaling_target" "ecs_web_target" {
   max_capacity       = 4
@@ -255,7 +257,7 @@ resource "aws_cloudwatch_metric_alarm" "inscaling_metric_alarm" {
   #이 알람이 scaling policy을 트리거한다.
   alarm_actions = ["${aws_appautoscaling_policy.ecs_web_scale_in.arn}"]
 }
-*/
+
 
 resource "aws_iam_role" "ecs_task_role" {
   name = "ecs-task-role"
