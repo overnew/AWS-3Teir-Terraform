@@ -134,7 +134,7 @@ resource "aws_lb_listener_rule" "app_rule" {
 
   condition {
     path_pattern {
-      values = ["/app/*"]
+      values = ["/sign*","/my*"]
     }
   }
 
@@ -249,7 +249,7 @@ resource "aws_lb_listener_rule" "app_test_rule" {
 
   condition {
     path_pattern {
-      values = ["/app/*"]
+      values = ["/sign*","/my*"]
     }
   }
 

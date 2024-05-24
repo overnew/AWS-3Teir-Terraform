@@ -189,7 +189,7 @@ module "codepipe_app" {
   create_new_repo = true
 
   source_repository_name = "ldj-app-repo"
-  source_repository_branch = "main"
+  source_repository_branch = "master"
 
   build_name = "ci-cd-builder"
   deploy_name = "ci-cd-deploy"
