@@ -173,7 +173,7 @@ module "codepipe_web" {
   deploy_targaet_lb_target_group_name = module.ecs.web_lb_target_group_name
   deploy_targaet_lb_test_target_group_name = module.ecs.web_lb_test_target_group_name
 
-  listener_port = 80
+  listener_port = 443
   test_listener_port = 8080
 }
 
@@ -205,9 +205,21 @@ module "codepipe_app" {
   deploy_targaet_lb_target_group_name = module.ecs.app_lb_target_group_name
   deploy_targaet_lb_test_target_group_name = module.ecs.app_lb_test_target_group_name
 
-  listener_port = 80
+  listener_port = 443
   test_listener_port = 8080
 }
+
+#alb와 도메인 연결
+module "route53" {
+  source = "./domain"
+
+  depends_on = [ module.ecs ]  #domain은 alb생성 후에
+
+  alb_dns_name = module.ecs.alb_dns_name
+  alb_zone_id = module.ecs.alb_zone_id
+}
+
+
 
 /*
 

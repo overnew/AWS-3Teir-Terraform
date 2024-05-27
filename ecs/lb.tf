@@ -55,13 +55,14 @@ resource "aws_lb_target_group" "web_target_group" {
 #Defines an HTTP Listener for the ALB
 resource "aws_lb_listener" "service_listener" {
   load_balancer_arn         = aws_alb.web_alb.arn
-  port                      = "80"
-  protocol                  = "HTTP"
+  port                      = "443"
+  protocol                  = "HTTPS"
 
   default_action {
     type                    = "forward"
     target_group_arn        = aws_lb_target_group.web_target_group.arn
   }
+   certificate_arn   = data.aws_acm_certificate.mili_acm.arn
 
   tags = merge(
     {
@@ -146,13 +147,15 @@ resource "aws_lb_listener_rule" "app_rule" {
 resource "aws_lb_listener" "test_listener" {
   load_balancer_arn         = aws_alb.web_alb.arn
   port                      = "8080"
-  protocol                  = "HTTP"
+  protocol                  = "HTTPS"
 
   default_action {
     type                    = "forward"
     #target_group_arn        = aws_lb_target_group.web_test_target_group.arn
     target_group_arn        = aws_lb_target_group.web_target_group.arn  
   }
+
+  certificate_arn   = data.aws_acm_certificate.mili_acm.arn
 
   tags = merge(
     {

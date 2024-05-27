@@ -11,6 +11,6 @@ resource "aws_route53_record" "alias_route53_record" {
 }
 
 data "aws_route53_zone" "milipresso_zone" {
-  name = "milipresso.com."
+  name = "milipresso.shop."
   private_zone = false
 }
