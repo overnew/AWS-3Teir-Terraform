@@ -51,3 +51,12 @@ output "app_lb_target_group_name" {
 output "app_lb_test_target_group_name" {
   value = aws_lb_target_group.app_test_target_group.name
 }
+
+#for route53
+output "alb_dns_name" {
+  value = aws_alb.web_alb.dns_name
+}
+
+output "alb_zone_id" {
+  value = aws_alb.web_alb.zone_id
+}
