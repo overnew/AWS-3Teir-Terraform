@@ -1,5 +1,7 @@
 #vpc creation#
-
+locals {
+  route_table_name = "rt"
+}
 
 
 resource "aws_vpc" "vpc_name" {
@@ -75,22 +77,39 @@ resource "aws_subnet" "public_subnets" {
 
   tags = merge(
     {
-      Name = format(
-        "%s-%s",
-        var.public_subnet_name,
-        element(split("_", each.key), 2)  
-        # split 문자로 key를 자른 후, idx:2인 데이터를 사용
-      )
+      Name = each.key
+      #format(
+      #  "%s-%s",
+      #  element(split("_", each.key), 0),  #var.public_subnet_name,
+      #  element(split("_", each.key), 2)  
+      #  # split 문자로 key를 자른 후, idx:2인 데이터를 사용
+      #)
     },
     var.default_tag
   )
 }
 
+resource "aws_subnet" "nfw_subnets" {
+  for_each          = var.nfw_subnet_data
+  vpc_id            = aws_vpc.vpc_name.id
+  cidr_block        = each.value["cidr"]
+  availability_zone = each.value["zone"]
+  
+  # 공인 IP 자동 할당 활성화
+  map_public_ip_on_launch = true
+
+  tags = merge(
+    {
+      Name = each.key
+    },
+    var.default_tag
+  )
+}
 
 #create NGW#
 resource "aws_nat_gateway" "nat_gateway1" {
   allocation_id = aws_eip.nat_eip1.id
-  subnet_id = aws_subnet.public_subnets["pub_sub_1a"].id
+  subnet_id = aws_subnet.public_subnets["nat_sub_1a"].id
 
   tags = merge(
     {
@@ -105,7 +124,7 @@ resource "aws_nat_gateway" "nat_gateway1" {
 /*
 resource "aws_nat_gateway" "nat_gateway2" {
   allocation_id = aws_eip.nat_eip2.id
-  subnet_id = aws_subnet.public_subnets["pub_sub_2c"].id
+  subnet_id = aws_subnet.public_subnets["nat_sub_2c"].id
 
   tags = merge(
     {
@@ -118,8 +137,76 @@ resource "aws_nat_gateway" "nat_gateway2" {
   depends_on = [aws_internet_gateway.igw]
 }*/
 
+#network firewall route table#
+resource "aws_route_table" "igw_rt" {
+  vpc_id = aws_vpc.vpc_name.id
+  
+  route {
+    cidr_block = var.public_subnet_data["nat_sub_1a"].cidr
+    vpc_endpoint_id = element([for ss in tolist(aws_networkfirewall_firewall.inspection_vpc_anfw.firewall_status[0].sync_states) : ss.attachment[0].endpoint_id if ss.attachment[0].subnet_id == aws_subnet.nfw_subnets["nfw_sub_1a"].id], 0)
+  }
+
+  route {
+    cidr_block = var.public_subnet_data["nat_sub_2c"].cidr
+    vpc_endpoint_id = element([for ss in tolist(aws_networkfirewall_firewall.inspection_vpc_anfw.firewall_status[0].sync_states) : ss.attachment[0].endpoint_id if ss.attachment[0].subnet_id == aws_subnet.nfw_subnets["nfw_sub_1a"].id], 0)
+  }
+  
+  route {
+    cidr_block = var.public_subnet_data["pub_sub_1a"].cidr
+    vpc_endpoint_id = element([for ss in tolist(aws_networkfirewall_firewall.inspection_vpc_anfw.firewall_status[0].sync_states) : ss.attachment[0].endpoint_id if ss.attachment[0].subnet_id == aws_subnet.nfw_subnets["nfw_sub_1a"].id], 0)
+  }
+
+  route {
+    cidr_block = var.public_subnet_data["pub_sub_2c"].cidr
+    vpc_endpoint_id = element([for ss in tolist(aws_networkfirewall_firewall.inspection_vpc_anfw.firewall_status[0].sync_states) : ss.attachment[0].endpoint_id if ss.attachment[0].subnet_id == aws_subnet.nfw_subnets["nfw_sub_1a"].id], 0)
+  }
+
+  tags = merge(
+    {
+      Name = format("%s-%s", "igw", local.route_table_name)
+    },
+    var.default_tag
+  )
+}
+
+
+resource "aws_route_table" "nfw_rt" {
+  vpc_id = aws_vpc.vpc_name.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
+  tags = merge(
+    {
+      Name = format("%s-%s", "nfw", local.route_table_name)
+    },
+    var.default_tag
+  )
+}
+
+
+resource "aws_route_table" "to_nfw_rt" {
+  #count = 2
+  vpc_id = aws_vpc.vpc_name.id
+  
+  route {
+    cidr_block = "0.0.0.0/0"
+    vpc_endpoint_id = element([for ss in tolist(aws_networkfirewall_firewall.inspection_vpc_anfw.firewall_status[0].sync_states) : ss.attachment[0].endpoint_id if ss.attachment[0].subnet_id == aws_subnet.nfw_subnets["nfw_sub_1a"].id], 0)
+    #vpc_endpoint_id = aws_networkfirewall_firewall.inspection_vpc_anfw.firewall_status[0].sync_states[0].attachment[0].endpoint_id
+  }
+
+  tags = merge(
+    {
+      Name = format("%s-%s-%d", "public", local.route_table_name, 1)#count.index)
+    },
+    var.default_tag
+  )
+}
 
 #public route table#
+/*
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.vpc_name.id
 
@@ -134,14 +221,28 @@ resource "aws_route_table" "public_rt" {
     },
     var.default_tag
   )
+}*/
+
+#subnet과 연결
+resource "aws_route_table_association" "nfw" {
+  for_each       = var.nfw_subnet_data
+  #subnet_id      = aws_subnet.public[each.key].id
+  subnet_id      = aws_subnet.nfw_subnets[each.key].id
+  route_table_id = aws_route_table.nfw_rt.id
 }
 
-#public subnet과 연결
 resource "aws_route_table_association" "public" {
   for_each       = var.public_subnet_data
   #subnet_id      = aws_subnet.public[each.key].id
   subnet_id      = aws_subnet.public_subnets[each.key].id
-  route_table_id = aws_route_table.public_rt.id
+  route_table_id = aws_route_table.to_nfw_rt.id
+}
+
+resource "aws_route_table_association" "igw" {
+  #subnet_id      = aws_subnet.public[each.key].id
+  #subnet_id      = aws_subnet.public_subnets[each.key].id
+  gateway_id = aws_internet_gateway.igw.id
+  route_table_id = aws_route_table.igw_rt.id
 }
 
 

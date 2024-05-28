@@ -32,6 +32,7 @@ variable "igw_name" {
 
 variable "az_names" {}
 variable "public_subnet_data" {}
+variable "nfw_subnet_data" {}
 variable "public_subnet_name" {}
 variable "nat_eip_name" {}
 variable "public_rt_name" {}

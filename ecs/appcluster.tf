@@ -34,7 +34,7 @@ resource "aws_ecs_task_definition" "app_task" {
     {
       name      = "app"
     #image 주소
-      image     = "public.ecr.aws/nginx/nginx:1.26-alpine-perl" #"public.ecr.aws/lts/apache2:2.4-20.04_beta" 
+      image     = "851725230407.dkr.ecr.ap-northeast-1.amazonaws.com/name:appv02" #"public.ecr.aws/lts/apache2:2.4-20.04_beta" 
       #cpu       = 10
       #memory    = 512
       essential = true

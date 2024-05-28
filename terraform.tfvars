@@ -25,6 +25,25 @@ public_subnet_data = {
   pub_sub_2c = {
     zone = "ap-northeast-1c"
     cidr = "10.10.2.0/24"
+  },
+  nat_sub_1a = {
+    zone = "ap-northeast-1a"
+    cidr = "10.10.3.0/24"
+  },
+  nat_sub_2c = {
+    zone = "ap-northeast-1c"
+    cidr = "10.10.4.0/24"
+  }
+}
+
+nfw_subnet_data = {
+  nfw_sub_1a = {
+    zone = "ap-northeast-1a"
+    cidr = "10.10.5.0/24"
+  },
+  nfw_sub_2c = {
+    zone = "ap-northeast-1c"
+    cidr = "10.10.6.0/24"
   }
 }
 

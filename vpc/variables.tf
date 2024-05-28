@@ -33,6 +33,7 @@ variable "igw_name" {
 variable "nat_eip_name" {}
 variable "public_subnet_data" {}
 variable "public_subnet_name" {}
+variable "nfw_subnet_data" {}
 
 variable "public_rt_name" {}
 variable "private_rt_name" {}

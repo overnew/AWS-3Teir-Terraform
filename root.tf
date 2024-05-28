@@ -37,6 +37,7 @@ module "vpc" {
   nat_eip_name = var.nat_eip_name
   public_subnet_data = var.public_subnet_data
   public_subnet_name = var.public_subnet_name
+  nfw_subnet_data = var.nfw_subnet_data
   public_rt_name = var.public_rt_name
   private_rt_name = var.private_rt_name
 
@@ -149,6 +150,7 @@ module "web_service" {
 module "codepipe_web" {
   depends_on = [ module.ecs ]
   source = "./cicd"
+  count = 0  # disable
   
   region = var.region
   project_name = "web-ci-cd"
@@ -181,6 +183,7 @@ module "codepipe_web" {
 module "codepipe_app" {
   depends_on = [ module.ecs ]
   source = "./cicd"
+  count = 0  # disable
   
   region = var.region
   project_name = "app-ci-cd"
@@ -219,6 +222,13 @@ module "route53" {
   alb_zone_id = module.ecs.alb_zone_id
 }
 
+
+##WAF
+module "waf" {
+  source = "./waf"
+
+  target_alb_arn = module.ecs.lb_arn
+}
 
 
 /*
