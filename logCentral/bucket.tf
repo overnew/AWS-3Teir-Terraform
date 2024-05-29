@@ -7,7 +7,7 @@ resource "aws_s3_bucket" "log_central_bucket" {
 resource "aws_s3_bucket_ownership_controls" "log_central_bucket_ownership_control" {
   bucket = aws_s3_bucket.log_central_bucket.id
   rule {
-    object_ownership = "BucketOwnerEnforced"
+    object_ownership = "ObjectWriter"#"BucketOwnerEnforced"
   }
 }
 
@@ -19,6 +19,36 @@ resource "aws_s3_bucket_public_access_block" "log_central_bucket_public_access_b
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+
+resource "aws_s3_bucket_policy" "s3_example_bucket_policy" {
+     bucket = aws_s3_bucket.log_central_bucket.id
+   policy = jsonencode({
+    "Version": "2012-10-17",
+        "Statement": [
+           {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "logs.amazonaws.com",
+            },
+            "Action": [
+                "s3:GetBucketAcl",
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "${aws_s3_bucket.log_central_bucket.arn}/*",
+                "${aws_s3_bucket.log_central_bucket.arn}"
+            ]
+        }
+
+         ]
+  })
+
+}
+
+
 
 resource "random_string" "bucket_random_id" {
   length  = 8
