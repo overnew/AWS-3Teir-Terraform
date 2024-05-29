@@ -13,6 +13,12 @@ provider "aws" {
   region  = var.region
 }
 
+#provider "aws" {  #dns log를 위해 생성
+#  alias  = "us-east-1"
+#  region = "us-east-1"
+#}
+
+
 module "log_central" {
   source = "./logCentral"
 
