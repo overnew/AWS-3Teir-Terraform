@@ -13,21 +13,28 @@ provider "aws" {
   region  = var.region
 }
 
+module "log_central" {
+  source = "./logCentral"
+
+}
+
 module "vpc" {
   source = "./vpc"
 
- project_name = var.project_name
- owner = var.project_name
- part =  "vpc"
- region = var.region
-
- vpc_name = var.vpc_name
- vpc_cidr_block = var.vpc_cidr_block
- nat_gw_name = var.nat_gw_name
-
- igw_name = var.igw_name
-
- default_tag = {
+  project_name = var.project_name
+  owner = var.project_name
+  part =  "vpc"
+  region = var.region
+ 
+  log_central_bucket_arn = module.log_central.log_central_bucket_arn
+ 
+  vpc_name = var.vpc_name
+  vpc_cidr_block = var.vpc_cidr_block
+  nat_gw_name = var.nat_gw_name
+ 
+  igw_name = var.igw_name
+ 
+  default_tag = {
     project = var.project_name
     owner = var.owner
     part = "vpc"
