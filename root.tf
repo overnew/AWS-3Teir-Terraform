@@ -231,6 +231,21 @@ module "waf" {
 }
 
 
+# CloudTrail
+module "cloudtrail" {
+  source = "./cloudtrail"
+
+  default_tag = {
+    project = var.project_name
+    owner = var.owner
+    part = "cloudtrail"
+    env ="test"
+  }
+  default_region = var.region
+  service_table_name = "user_table"
+}
+
+
 /*
 
 #web security group#

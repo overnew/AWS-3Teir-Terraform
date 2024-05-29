@@ -47,7 +47,7 @@ resource "aws_eip" "nat_eip1" {
     var.default_tag
   )
 }
-/*
+
 resource "aws_eip" "nat_eip2" {
   domain     = "vpc"
 
@@ -63,7 +63,7 @@ resource "aws_eip" "nat_eip2" {
     var.default_tag
   )
 }
-*/
+
 
 #public subnets
 resource "aws_subnet" "public_subnets" {
@@ -121,7 +121,7 @@ resource "aws_nat_gateway" "nat_gateway1" {
   # igw가 생성된 후에 생성
   depends_on = [aws_internet_gateway.igw]
 }
-/*
+
 resource "aws_nat_gateway" "nat_gateway2" {
   allocation_id = aws_eip.nat_eip2.id
   subnet_id = aws_subnet.public_subnets["nat_sub_2c"].id
@@ -133,9 +133,8 @@ resource "aws_nat_gateway" "nat_gateway2" {
     var.default_tag
   )
   
-  # igw가 생성된 후에 생성
   depends_on = [aws_internet_gateway.igw]
-}*/
+}
 
 #network firewall route table#
 resource "aws_route_table" "igw_rt" {
@@ -187,7 +186,7 @@ resource "aws_route_table" "nfw_rt" {
 }
 
 
-resource "aws_route_table" "to_nfw_rt" {
+resource "aws_route_table" "to_nfw_rt_a" {
   #count = 2
   vpc_id = aws_vpc.vpc_name.id
   
@@ -199,29 +198,27 @@ resource "aws_route_table" "to_nfw_rt" {
 
   tags = merge(
     {
-      Name = format("%s-%s-%d", "public", local.route_table_name, 1)#count.index)
+      Name = format("%s-%s-%s", "public", local.route_table_name, "a")#count.index)
     },
     var.default_tag
   )
 }
 
-#public route table#
-/*
-resource "aws_route_table" "public_rt" {
+resource "aws_route_table" "to_nfw_rt_c" {
   vpc_id = aws_vpc.vpc_name.id
-
+  
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id
+    vpc_endpoint_id = element([for ss in tolist(aws_networkfirewall_firewall.inspection_vpc_anfw.firewall_status[0].sync_states) : ss.attachment[0].endpoint_id if ss.attachment[0].subnet_id == aws_subnet.nfw_subnets["nfw_sub_2c"].id], 0)
   }
 
   tags = merge(
     {
-      Name = var.public_rt_name
+      Name = format("%s-%s-%s", "public", local.route_table_name, "c")#count.index)
     },
     var.default_tag
   )
-}*/
+}
 
 #subnet과 연결
 resource "aws_route_table_association" "nfw" {
@@ -231,16 +228,22 @@ resource "aws_route_table_association" "nfw" {
   route_table_id = aws_route_table.nfw_rt.id
 }
 
-resource "aws_route_table_association" "public" {
-  for_each       = var.public_subnet_data
+# public 서브넷은 nfw endpoint로 전송
+resource "aws_route_table_association" "public_a" {
+  for_each       = toset(["pub_sub_1a", "nat_sub_1a"]) 
   #subnet_id      = aws_subnet.public[each.key].id
   subnet_id      = aws_subnet.public_subnets[each.key].id
-  route_table_id = aws_route_table.to_nfw_rt.id
+  route_table_id = aws_route_table.to_nfw_rt_a.id
 }
 
+resource "aws_route_table_association" "public_c" {
+  for_each       = toset(["pub_sub_2c", "nat_sub_2c"]) 
+  subnet_id      = aws_subnet.public_subnets[each.key].id
+  route_table_id = aws_route_table.to_nfw_rt_c.id
+}
+
+#igw의 edge association
 resource "aws_route_table_association" "igw" {
-  #subnet_id      = aws_subnet.public[each.key].id
-  #subnet_id      = aws_subnet.public_subnets[each.key].id
   gateway_id = aws_internet_gateway.igw.id
   route_table_id = aws_route_table.igw_rt.id
 }
@@ -268,7 +271,7 @@ resource "aws_subnet" "private_subnets" {
 }
 
 #private route table
-resource "aws_route_table" "private_rt" {
+resource "aws_route_table" "private_rt_a" {
   vpc_id = aws_vpc.vpc_name.id
 
   route {
@@ -278,15 +281,61 @@ resource "aws_route_table" "private_rt" {
 
   tags = merge(
     {
-      Name = var.private_rt_name
+      Name = format("%s-%s",var.private_rt_name, "a")
     },
     var.default_tag
   )
 }
 
+resource "aws_route_table" "private_rt_c" {
+  vpc_id = aws_vpc.vpc_name.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.nat_gateway2.id
+  }
+
+  tags = merge(
+    {
+      Name = format("%s-%s",var.private_rt_name, "c")
+    },
+    var.default_tag
+  )
+}
+
+#Was만 NAT로의 경로 설정
 # private route association
-resource "aws_route_table_association" "private" {
-  for_each       = var.private_subnet_data
+resource "aws_route_table_association" "private_a" {
+  #for_each       = var.private_subnet_data
+  #subnet_id      = aws_subnet.private_subnets[each.key].id
+  subnet_id      = aws_subnet.private_subnets["app_sub_1a"].id
+  route_table_id = aws_route_table.private_rt_a.id
+}
+
+resource "aws_route_table_association" "private_c" {
+  subnet_id      = aws_subnet.private_subnets["app_sub_2c"].id
+  route_table_id = aws_route_table.private_rt_c.id
+}
+
+#기본 private subnet
+resource "aws_route_table" "private_rt_default" {
+  vpc_id = aws_vpc.vpc_name.id
+
+  route {
+    cidr_block = var.vpc_cidr_block
+    gateway_id = "local"
+  }
+
+  tags = merge(
+    {
+      Name = format("%s-%s",var.private_rt_name, "c")
+    },
+    var.default_tag
+  )
+}
+
+resource "aws_route_table_association" "private_default" {
+  for_each       = toset(["web_sub_1a", "web_sub_2c","db_sub_1a", "db_sub_2c"])
   subnet_id      = aws_subnet.private_subnets[each.key].id
-  route_table_id = aws_route_table.private_rt.id
+  route_table_id = aws_route_table.private_rt_a.id
 }

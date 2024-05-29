@@ -40,16 +40,47 @@ resource "aws_networkfirewall_logging_configuration" "anfw_alert_logging_configu
       log_destination_type = "CloudWatchLogs"
       log_type             = "ALERT"
     }
-    #log_destination_config {
-    #  log_destination = {
-    #    bucketName = aws_s3_bucket.anfw_flow_bucket.bucket
-    #  }
-    #  log_destination_type = "S3"
-    #  log_type             = "FLOW"
-    #}
+
+    #모든 로근 S3로
+    log_destination_config {
+      log_destination = {
+        bucketName = aws_s3_bucket.anfw_flow_bucket.bucket
+      }
+      log_destination_type = "S3"
+      log_type             = "FLOW"
+    }
   }
 }
 
+#s3 선언
+resource "aws_s3_bucket" "anfw_flow_bucket" {
+  bucket        = "network-firewall-flow-bucket-${random_string.bucket_random_id.id}"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_ownership_controls" "anfw_flow_bucket_ownership_control" {
+  bucket = aws_s3_bucket.anfw_flow_bucket.id
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "anfw_flow_bucket_public_access_block" {
+  bucket = aws_s3_bucket.anfw_flow_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "random_string" "bucket_random_id" {
+  length  = 8
+  upper   = false
+  lower   = true
+  numeric  = true
+  special = false
+}
 /* #모듈로 진행시
 module "network_firewall" {
   source = "terraform-aws-modules/network-firewall/aws"
