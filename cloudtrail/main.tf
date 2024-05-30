@@ -19,7 +19,7 @@ resource "aws_cloudtrail" "mytrail" {
 
   event_selector {
     read_write_type           = "All"
-    include_management_events = false
+    include_management_events = true
 
     data_resource {
       type   = "AWS::DynamoDB::Table"
