@@ -22,14 +22,14 @@ resource "aws_s3_bucket_public_access_block" "log_central_bucket_public_access_b
 
 
 resource "aws_s3_bucket_policy" "s3_example_bucket_policy" {
-     bucket = aws_s3_bucket.log_central_bucket.id
+  bucket = aws_s3_bucket.log_central_bucket.id
    policy = jsonencode({
     "Version": "2012-10-17",
         "Statement": [
            {
             "Effect": "Allow",
             "Principal": {
-                "Service": "logs.amazonaws.com",
+                "Service": ["osis-pipelines.amazonaws.com","delivery.logs.amazonaws.com", "logs.amazonaws.com","cloudtrail.amazonaws.com"]
             },
             "Action": [
                 "s3:GetBucketAcl",
@@ -39,7 +39,12 @@ resource "aws_s3_bucket_policy" "s3_example_bucket_policy" {
             ],
             "Resource": [
                 "${aws_s3_bucket.log_central_bucket.arn}/*",
-                "${aws_s3_bucket.log_central_bucket.arn}"
+                "${aws_s3_bucket.log_central_bucket.arn}",
+                "${aws_s3_bucket.log_central_bucket.arn}/cloudtrail",
+                "${aws_s3_bucket.log_central_bucket.arn}/networkfirewall",
+                "${aws_s3_bucket.log_central_bucket.arn}/networkfirewall/AWSLogs/*",                
+                "${aws_s3_bucket.log_central_bucket.arn}/networkfirewall/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
+                
             ]
         }
 

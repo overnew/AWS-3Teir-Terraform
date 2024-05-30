@@ -1,7 +1,7 @@
 
 
 resource "aws_cloudtrail" "mytrail" {
-  depends_on = [aws_s3_bucket_policy.mytrail]
+  #depends_on = [aws_s3_bucket_policy.mytrail]
 
   name                          = "mytrail"
   enable_logging = true     #로깅 활성화
@@ -9,7 +9,7 @@ resource "aws_cloudtrail" "mytrail" {
   # 현재 리전으로만 설정
   is_multi_region_trail = false
 
-  s3_bucket_name                = aws_s3_bucket.mytrail.id
+  s3_bucket_name                = var.log_central_bucket_id
   s3_key_prefix                 = "cloudtrail"
   include_global_service_events = false
 
@@ -37,11 +37,11 @@ resource "aws_cloudtrail" "mytrail" {
   tags = var.default_tag
 }
 
-resource "aws_s3_bucket" "mytrail" {
-  bucket        = "ldj-all-log-${random_string.bucket_random_id.id}" 
-  force_destroy = true
-}
-
+#resource "aws_s3_bucket" "mytrail" {
+#  bucket        = "ldj-all-log-${random_string.bucket_random_id.id}" 
+#  force_destroy = true
+#}
+/*
 data "aws_iam_policy_document" "mytrail_policy" {
   statement {
     sid    = "AWSCloudTrailAclCheck"
@@ -53,7 +53,7 @@ data "aws_iam_policy_document" "mytrail_policy" {
     }
 
     actions   = ["s3:GetBucketAcl"]
-    resources = [aws_s3_bucket.mytrail.arn]
+    resources = [var.log_central_bucket_arn]
     condition {
       test     = "StringEquals"
       variable = "aws:SourceArn"
@@ -71,7 +71,7 @@ data "aws_iam_policy_document" "mytrail_policy" {
     }
 
     actions   = ["s3:PutObject"]
-    resources = ["${aws_s3_bucket.mytrail.arn}/cloudtrail/AWSLogs/${data.aws_caller_identity.current.account_id}/*"]
+    resources = ["${var.log_central_bucket_arn}/cloudtrail/AWSLogs/${data.aws_caller_identity.current.account_id}/*"]
 
     condition {
       test     = "StringEquals"
@@ -90,7 +90,7 @@ resource "aws_s3_bucket_policy" "mytrail" {
   bucket = aws_s3_bucket.mytrail.id
   policy = data.aws_iam_policy_document.mytrail_policy.json
   
-}
+}*/
 
 data "aws_caller_identity" "current" {}
 

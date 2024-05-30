@@ -33,6 +33,17 @@ resource "aws_cloudwatch_log_group" "anfw_alert_log_group" {
 resource "aws_networkfirewall_logging_configuration" "anfw_alert_logging_configuration" {
   firewall_arn = aws_networkfirewall_firewall.inspection_vpc_anfw.arn
   logging_configuration {
+    
+    #모든 로근 S3로
+    log_destination_config {
+      log_destination = {
+        bucketName = var.log_central_bucket
+        prefix = "networkfirewall"
+      }
+      log_destination_type = "S3"
+      log_type             = "FLOW"
+    }
+
     log_destination_config {
       log_destination = {
         logGroup = aws_cloudwatch_log_group.anfw_alert_log_group.name
@@ -41,17 +52,9 @@ resource "aws_networkfirewall_logging_configuration" "anfw_alert_logging_configu
       log_type             = "ALERT"
     }
 
-    #모든 로근 S3로
-    log_destination_config {
-      log_destination = {
-        bucketName = aws_s3_bucket.anfw_flow_bucket.bucket
-      }
-      log_destination_type = "S3"
-      log_type             = "FLOW"
-    }
   }
 }
-
+/*
 #s3 선언
 resource "aws_s3_bucket" "anfw_flow_bucket" {
   bucket        = "network-firewall-flow-bucket-${random_string.bucket_random_id.id}"
@@ -80,7 +83,7 @@ resource "random_string" "bucket_random_id" {
   lower   = true
   numeric  = true
   special = false
-}
+}*/
 /* #모듈로 진행시
 module "network_firewall" {
   source = "terraform-aws-modules/network-firewall/aws"
