@@ -164,7 +164,7 @@ module "web_service" {
 module "codepipe_web" {
   depends_on = [ module.ecs ]
   source = "./cicd"
-  count = 0  # disable
+  #count = 0  # disable
   
   region = var.region
   project_name = "web-ci-cd"
@@ -263,8 +263,22 @@ module "cloudtrail" {
   log_central_bucket_id = module.log_central.log_central_bucket_id
 }
 
+module "config" {
+  source = "./config"
 
-#DNS log
+  default_tag = {
+    project = var.project_name
+    owner = var.owner
+    part = "config"
+    env ="test"
+  }
+
+  log_central_bucket = module.log_central.log_central_bucket
+
+}
+
+#DNS log 
+# 타리전 사용을 위해 root에 선언
 resource "aws_route53_query_log" "milipresso_log" {
   depends_on = [module.route53 ,aws_cloudwatch_log_resource_policy.route53-query-logging-policy]
 

@@ -41,6 +41,8 @@ resource "aws_s3_bucket_policy" "s3_example_bucket_policy" {
                 "${aws_s3_bucket.log_central_bucket.arn}/*",
                 "${aws_s3_bucket.log_central_bucket.arn}",
                 "${aws_s3_bucket.log_central_bucket.arn}/cloudtrail",
+                "${aws_s3_bucket.log_central_bucket.arn}/config",
+				        "${aws_s3_bucket.log_central_bucket.arn}/config/*",
                 "${aws_s3_bucket.log_central_bucket.arn}/networkfirewall",
                 "${aws_s3_bucket.log_central_bucket.arn}/networkfirewall/AWSLogs/*",                
                 "${aws_s3_bucket.log_central_bucket.arn}/networkfirewall/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
