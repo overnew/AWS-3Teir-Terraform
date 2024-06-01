@@ -101,6 +101,22 @@ module "endpoints" {
       #security_group_ids  = ["sg-987654321"]
       subnet_ids          = local.endpoint_subnet_ids
       tags = { Name = "logs-${local.endpoint_postfix_name}" }
+    },
+    amp = {
+      service             = "aps"
+      private_dns_enabled = true
+      auto_accept = true
+      #security_group_ids  = ["sg-987654321"]
+      subnet_ids          = local.endpoint_subnet_ids
+      tags = { Name = "amp-${local.endpoint_postfix_name}" }
+    },
+    amp-workspace = {
+      service             = "aps-workspaces"
+      private_dns_enabled = true
+      auto_accept = true
+      #security_group_ids  = ["sg-987654321"]
+      subnet_ids          = local.endpoint_subnet_ids
+      tags = { Name = "amp-workspace-${local.endpoint_postfix_name}" }
     }
   }
 
