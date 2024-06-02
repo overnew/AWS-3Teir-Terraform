@@ -64,7 +64,41 @@ resource "aws_ecs_task_definition" "web_task" {
           "retries"     :3
         }
 
-    } /*,
+    },
+    {
+            "name": "aws-otel-collector",
+            "image": "public.ecr.aws/aws-observability/aws-otel-collector:v0.39.0",
+            "cpu": 0,
+            "portMappings": [],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "AWS_PROMETHEUS_ENDPOINT",
+                    "value": "https://aps-workspaces.ap-northeast-1.amazonaws.com/workspaces/ws-ddab0164-4917-44b4-9854-0abf2551f6a6/api/v1/remote_write"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "secrets": [
+                {
+                    "name": "AOT_CONFIG_CONTENT",
+                    "valueFrom": "otel-collector-config"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-create-group": "true",
+                    "awslogs-group": "/ecs/ecs-aws-otel-sidecar-collector",
+                    "awslogs-region": "ap-northeast-1",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        }
+    
+     /*,
     {
       name      = "second"
       image     = "public.ecr.aws/nginx/nginx:1.26-alpine-perl"
@@ -305,7 +339,11 @@ resource "aws_iam_role" "ecs_task_role" {
                 "dynamodb:Scan",
                 "dynamodb:PartiQLSelect",
                 "dynamodb:PutItem",
-                "dynamodb:UpdateItem"
+                "dynamodb:UpdateItem",
+                "ssm:Describe*",
+                "ssm:Get*",
+                "ssm:List*",
+                "aps:RemoteWrite"  #프로메테우스로 데이터 전송
             ],
             "Resource": "*"
         }
