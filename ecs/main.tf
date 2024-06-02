@@ -237,7 +237,9 @@ resource "aws_cloudwatch_metric_alarm" "outscaling_metric_alarm" {
   }
 
   #이 알람이 scaling policy을 트리거한다.
-  alarm_actions = ["${aws_appautoscaling_policy.ecs_web_scale_out.arn}"]
+  alarm_actions = ["${aws_appautoscaling_policy.ecs_web_scale_out.arn}", 
+    var.slack_sns_arn
+  ]
 }
 
 
@@ -274,6 +276,7 @@ resource "aws_appautoscaling_policy" "ecs_web_scale_in" {
 # scaling in 알람
 resource "aws_cloudwatch_metric_alarm" "inscaling_metric_alarm" {
   
+  count = 0
   alarm_name          = "${local.web_name}-inscaling-metric-alarm"
   comparison_operator = "LessThanOrEqualToThreshold"  # 임계치보다 낮은 경우 트리거
   evaluation_periods  = "1"
@@ -289,7 +292,9 @@ resource "aws_cloudwatch_metric_alarm" "inscaling_metric_alarm" {
   }
 
   #이 알람이 scaling policy을 트리거한다.
-  alarm_actions = ["${aws_appautoscaling_policy.ecs_web_scale_in.arn}"]
+  alarm_actions = ["${aws_appautoscaling_policy.ecs_web_scale_in.arn}", 
+    var.slack_sns_arn
+  ]
 }
 
 

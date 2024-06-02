@@ -2,6 +2,13 @@
 resource "aws_s3_bucket" "log_central_bucket" {
   bucket        = "log-central-ldj-${random_string.bucket_random_id.id}"
   force_destroy = true
+
+  tags = merge(
+    {
+      "${var.s3_backup_tag}" = "true"
+    },
+    var.default_tag
+  )
 }
 
 resource "aws_s3_bucket_ownership_controls" "log_central_bucket_ownership_control" {

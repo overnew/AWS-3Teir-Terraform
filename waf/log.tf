@@ -1,6 +1,13 @@
 #https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/wafv2_web_acl_logging_configuration
 resource "aws_cloudwatch_log_group" "example" {
   name = "aws-waf-logs-some-uniq-suffix"
+
+  tags = merge(
+    {
+      "${var.s3_backup_tag}" = "true"
+    },
+    var.default_tag
+  )
 }
 
 resource "aws_wafv2_web_acl_logging_configuration" "to_cloudwatch" {

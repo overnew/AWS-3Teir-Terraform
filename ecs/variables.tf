@@ -13,3 +13,5 @@ variable "db_subnet_ids" {}
 
 variable "web_alb_sg_id" {}
 variable "app_alb_sg_id" {}
+
+variable "slack_sns_arn" {}

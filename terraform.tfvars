@@ -3,7 +3,7 @@ owner = "ldj"
 user_id = ""
 
 #기본 태그 정보 정의
-
+s3_backup_tag = "s3backup"
 
 #VPC
 region = "ap-northeast-1"

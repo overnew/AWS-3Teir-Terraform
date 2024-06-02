@@ -22,6 +22,15 @@ provider "aws" {  #dns log를 위해 생성
 module "log_central" {
   source = "./logCentral"
 
+  default_tag = {
+    project = var.project_name
+    owner = var.owner
+    part = "log-central"
+    env ="test"
+  }
+
+
+  s3_backup_tag = var.s3_backup_tag
 }
 
 module "vpc" {
@@ -105,6 +114,7 @@ module "ecs" {
   web_alb_sg_id = module.security_groups.web_alb_sg_id
   app_alb_sg_id = module.security_groups.web_alb_sg_id
 
+  slack_sns_arn = module.alert.slack_sns_arn
 }
 
 
@@ -243,6 +253,15 @@ module "waf" {
   source = "./waf"
 
   target_alb_arn = module.ecs.lb_arn
+
+  default_tag = {
+    project = var.project_name
+    owner = var.owner
+    part = "waf"
+    env ="test"
+  }
+
+  s3_backup_tag = var.s3_backup_tag
 }
 
 
@@ -275,6 +294,16 @@ module "config" {
 
   log_central_bucket = module.log_central.log_central_bucket
 
+}
+
+module "alert" {
+  source = "./alert"
+}
+
+module "backup" {
+  source = "./backup"
+
+  s3_backup_tag = var.s3_backup_tag
 }
 
 #DNS log 

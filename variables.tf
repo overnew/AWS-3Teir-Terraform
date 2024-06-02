@@ -13,6 +13,10 @@ variable "region" {
   description = "aws_region"
 }
 
+variable "s3_backup_tag" {
+  
+}
+
 variable "vpc_name" {
     description = "vpc name"
 }
