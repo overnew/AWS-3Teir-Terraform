@@ -147,7 +147,7 @@ resource "aws_route_table" "igw_rt" {
 
   route {
     cidr_block = var.public_subnet_data["nat_sub_2c"].cidr
-    vpc_endpoint_id = element([for ss in tolist(aws_networkfirewall_firewall.inspection_vpc_anfw.firewall_status[0].sync_states) : ss.attachment[0].endpoint_id if ss.attachment[0].subnet_id == aws_subnet.nfw_subnets["nfw_sub_1a"].id], 0)
+    vpc_endpoint_id = element([for ss in tolist(aws_networkfirewall_firewall.inspection_vpc_anfw.firewall_status[0].sync_states) : ss.attachment[0].endpoint_id if ss.attachment[0].subnet_id == aws_subnet.nfw_subnets["nfw_sub_2c"].id], 0)
   }
   
   route {
@@ -157,7 +157,7 @@ resource "aws_route_table" "igw_rt" {
 
   route {
     cidr_block = var.public_subnet_data["pub_sub_2c"].cidr
-    vpc_endpoint_id = element([for ss in tolist(aws_networkfirewall_firewall.inspection_vpc_anfw.firewall_status[0].sync_states) : ss.attachment[0].endpoint_id if ss.attachment[0].subnet_id == aws_subnet.nfw_subnets["nfw_sub_1a"].id], 0)
+    vpc_endpoint_id = element([for ss in tolist(aws_networkfirewall_firewall.inspection_vpc_anfw.firewall_status[0].sync_states) : ss.attachment[0].endpoint_id if ss.attachment[0].subnet_id == aws_subnet.nfw_subnets["nfw_sub_2c"].id], 0)
   }
 
   tags = merge(

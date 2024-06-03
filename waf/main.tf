@@ -1,7 +1,11 @@
 #https://yogae.tistory.com/29
 # 특정 IP의 과도한 요청 차단
+locals {
+  web_acl_name = "my-web-acl"
+}
+
 resource "aws_wafv2_web_acl" "my_web_acl" {
-  name  = "my-web-acl"
+  name  = local.web_acl_name
   scope = "REGIONAL"  #or CLOUDFRONT 
 
   default_action {

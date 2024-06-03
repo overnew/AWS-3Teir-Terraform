@@ -25,6 +25,8 @@ resource "aws_networkfirewall_firewall_policy" "anfw_policy" {
 }
 
 
+
+
 # log 세팅
 resource "aws_cloudwatch_log_group" "anfw_alert_log_group" {
   name = "/aws/network-firewall/alert"
