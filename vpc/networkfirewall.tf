@@ -15,16 +15,40 @@ resource "aws_networkfirewall_firewall" "inspection_vpc_anfw" {
 }
 
 resource "aws_networkfirewall_firewall_policy" "anfw_policy" {
+  #depends_on = [ aws_networkfirewall_rule_group.dns_notallow ]
   name = "firewall-policy"
   firewall_policy {
     stateless_default_actions          = ["aws:pass"]#aws:forward_to_sfe
     stateless_fragment_default_actions = ["aws:pass"]
+    #stateless_default_actions          = ["aws:forward_to_sfe"]
+    #stateless_fragment_default_actions = ["aws:forward_to_sfe"]
+    #stateless_rule_group_reference {
+    #  priority     = 10
+    #  resource_arn = aws_networkfirewall_rule_group.dns_notallow.arn
+    #}
+    #tls_inspection_configuration_arn = "arn:aws:network-firewall:REGION:ACCT:tls-configuration/example"
   }
   
   tags = var.default_tag
 }
 
 
+resource "aws_networkfirewall_rule_group" "dns_notallow" {
+  capacity = 10
+  name     = "dnsnotallow"
+  type     = "STATEFUL"
+  rule_group {
+    rules_source {
+      rules_source_list {
+        generated_rules_type = "ALLOWLIST"
+        target_types         = ["HTTP_HOST"]
+        targets              = ["www.google.com"]
+      }
+    }
+  }
+
+  tags = var.default_tag
+}
 
 
 # log 세팅
@@ -56,6 +80,31 @@ resource "aws_networkfirewall_logging_configuration" "anfw_alert_logging_configu
 
   }
 }
+
+resource "aws_cloudwatch_metric_alarm" "netfirewall_alert" {
+  for_each = toset(["a", "c"]) 
+  depends_on = [  ]
+  alarm_name                = "ldj-netfirewall-attack-alarm-${each.key}"
+  comparison_operator       = "GreaterThanThreshold"
+  evaluation_periods        = 1
+  metric_name               = "DroppedPackets"
+  namespace                 = "AWS/NetworkFirewall"
+  period                    = 60
+  statistic                 = "Maximum"
+  threshold                 = 0
+  alarm_description         = "This metric monitors anfw rule"
+
+  alarm_actions = [var.slack_alerts]
+
+  dimensions = {
+    FirewallName = "${aws_networkfirewall_firewall.inspection_vpc_anfw.name}"
+    AvailabilityZone = "${var.region}${each.key}"
+    Engine = "Stateful"
+  }
+  insufficient_data_actions = []
+}
+
+
 /*
 #s3 선언
 resource "aws_s3_bucket" "anfw_flow_bucket" {

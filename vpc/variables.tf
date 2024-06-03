@@ -51,3 +51,4 @@ variable "endpoint_sg_id" {
 
 variable "log_central_bucket_arn" {}
 variable "log_central_bucket" {}
+variable "slack_alerts" {}

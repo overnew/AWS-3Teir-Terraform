@@ -2,7 +2,7 @@ resource "aws_cloudwatch_metric_alarm" "foobar" {
   depends_on = [  ]
   alarm_name                = "ldj-waf-attack-alarm"
   comparison_operator       = "GreaterThanThreshold"
-  evaluation_periods        = 2
+  evaluation_periods        = 1
   metric_name               = "BlockedRequests"
   namespace                 = "AWS/WAFV2"
   period                    = 60

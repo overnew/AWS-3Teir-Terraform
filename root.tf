@@ -68,6 +68,7 @@ module "vpc" {
   private_subnet_name = var.private_subnet_name
 
   endpoint_sg_id = module.security_groups.endpoint_sg_id
+  slack_alerts = module.alert.slack_sns_arn
 }
 
 module "security_groups" {
