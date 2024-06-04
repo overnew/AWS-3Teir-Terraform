@@ -92,7 +92,7 @@ resource "aws_cloudwatch_metric_alarm" "netfirewall_alert" {
   period                    = 60
   statistic                 = "Maximum"
   threshold                 = 0
-  alarm_description         = "This metric monitors anfw rule"
+  alarm_description         = "Network firewallRule에 의해 차단된 패킷 발생!"
 
   alarm_actions = [var.slack_alerts]
 

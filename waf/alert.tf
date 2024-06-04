@@ -8,7 +8,7 @@ resource "aws_cloudwatch_metric_alarm" "foobar" {
   period                    = 60
   statistic                 = "Maximum"
   threshold                 = 0
-  alarm_description         = "This metric monitors ec2 cpu utilization"
+  alarm_description         = "특정 IP에서 과도한 요청이 발생하여 차단하였습니다."
 
   alarm_actions = [var.slack_alerts]
 
