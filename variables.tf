@@ -17,6 +17,8 @@ variable "s3_backup_tag" {
   
 }
 
+variable "SLACK_WEBHOOK_URL" {}
+
 variable "vpc_name" {
     description = "vpc name"
 }

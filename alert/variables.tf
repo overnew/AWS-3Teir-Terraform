@@ -1,0 +1,1 @@
+variable "SLACK_WEBHOOK_URL" {}

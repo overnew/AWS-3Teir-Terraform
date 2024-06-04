@@ -4,7 +4,7 @@ import os
 
 def lambda_handler(event, context):
   # SNS 메시지 추출
-  message = event['Records'][0]['Sns']['Message']
+  message = json.loads(event['Records'][0]['Sns']['Message'])
   
   alarm_name = message['AlarmName']
   description = message['AlarmDescription']

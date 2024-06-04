@@ -14,14 +14,13 @@ resource "aws_lambda_function" "slack_notifier" {
   handler  = "slack_notifier.lambda_handler"
   runtime  = "python3.8"
   source_code_hash = data.archive_file.slack_noti.output_base64sha256
-  
+  timeout = 60
 
   role = aws_iam_role.slack_notifier.arn
 
   environment {
     variables = {
-      SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/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"
-      #var.slack_webhook_url
+      SLACK_WEBHOOK_URL = var.SLACK_WEBHOOK_URL
     }
   }
 }

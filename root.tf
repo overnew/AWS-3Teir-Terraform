@@ -300,6 +300,8 @@ module "config" {
 
 module "alert" {
   source = "./alert"
+
+  SLACK_WEBHOOK_URL = var.SLACK_WEBHOOK_URL
 }
 
 module "backup" {
