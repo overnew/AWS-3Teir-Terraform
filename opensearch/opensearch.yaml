@@ -1,0 +1,113 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  InstanceType:
+    Description: Instance Type for OpenSearch Cluster
+    Type: String
+    Default: t3.medium.search #테스트에는낮은 스펙사용 m5.large.search
+
+  InstanceCount:
+    Description: Number of Instances for OpenSearch Cluster
+    Type: Number
+    Default: 1
+  
+  OSUsername:
+    Description: Username of the OS Admin
+    Type: String
+    Default: mastermaster
+  
+  OSPassword:
+    Description: Password of the OS Admin
+    Type: String
+    Default: 'Master1234$' 
+  
+  OSDomainName:
+    Description: Domain name for OpenSearch
+    Type: String
+    Default: ldj-opensearch-test-domain 
+    
+Resources:
+  OpenSearch:
+    #DependsOn: [OpenSearchSG]
+    Type: AWS::OpenSearchService::Domain
+    Properties:
+      DomainName: !Ref OSDomainName
+      AccessPolicies: #누구를 접속하게 해줄지
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: '*'
+            Action: 'es:*'
+            Resource: '*'
+      #AdvancedOptions: 
+      #  Key: Value
+      AdvancedSecurityOptions:      # Specifies options for fine-grained access control.
+        Enabled: true
+        InternalUserDatabaseEnabled: true  #  이 옵션이 있어야 마스터 유저 생성 가능
+        MasterUserOptions: 
+          MasterUserName: !Ref OSUsername
+          MasterUserPassword: !Ref OSPassword 
+          # 데이터를 바로 넣기 싫다면 dynamic refernece 사용 https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/dynamic-references.html
+      ClusterConfig:
+        InstanceType: !Ref InstanceType
+        InstanceCount: !Ref InstanceCount
+        #ZoneAwarenessEnabled: true
+        #ZoneAwarenessConfig: 
+        #  AvailabilityZoneCount: 3
+
+      #CognitoOptions: 
+      #  CognitoOptions
+      DomainEndpointOptions: # custom endpoint 세팅 가능
+        EnforceHTTPS: true  # 모든 전송을 https로 받음. enable fine-grained access control한 경우 필수
+      EBSOptions:
+        EBSEnabled: true
+        VolumeType: gp2
+        VolumeSize: 10
+      EncryptionAtRestOptions:  # 암호화가 필요한 경우, 
+        Enabled: true
+        # KmsKeyId: String #kms 키를 사용하는 경우 필요
+      EngineVersion: 'OpenSearch_2.13'
+      IPAddressType: 'ipv4'
+      #LogPublishingOptions: 
+      NodeToNodeEncryptionOptions: #노드간의 암호화/ 기본적으로 VPC 내의 트래픽은 암호화되지 않습니다. 
+        Enabled: true
+      #OffPeakWindowOptions:  # 사용량이 적은 시간 설정
+      #  OffPeakWindowOptions
+      #SoftwareUpdateOptions: 
+      #  SoftwareUpdateOptions
+      Tags:
+        -
+          Key: owner
+          Value: ldj
+      #pulic화를 위해 제거
+      #VPCOptions: 
+      #  SecurityGroupIds: 
+      #    - !Ref OpenSearchSG
+      #  SubnetIds: 
+      #    - subnet-02c59928b96231787    #하나만 해야지 생성되는데?
+      #  #  - subnet-02a6d8743d4fcb8b9   
+      #  #  - subnet-0f43eace403155dd6
+  #OpenSearchSG:
+  #  Type: AWS::EC2::SecurityGroup
+  #  Properties:
+  #    GroupDescription: Allow ALL Traffic
+  #    GroupName: ldj-OpenSearchSG
+  #    SecurityGroupIngress:
+  #      - IpProtocol: -1
+  #        CidrIp: '0.0.0.0/0'
+  #    SecurityGroupEgress:
+  #      - IpProtocol: -1
+  #        CidrIp: '0.0.0.0/0'
+  #    VpcId: 'vpc-01c885f9e4c0434f7' #!Ref [VPC 리소스 이름]
+  #    Tags:
+  #     -
+  #       Key: owner
+  #       Value: ldj
+
+
+
+Outputs:
+  OpenSearchEndpoint:
+    Description: OpenSearch Endpoint URL
+    Value: !Sub ${OpenSearch.DomainEndpoint}

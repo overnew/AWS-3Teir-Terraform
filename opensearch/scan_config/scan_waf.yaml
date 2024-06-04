@@ -1,0 +1,62 @@
+version: "2"
+log-pipeline:
+  source:
+    s3:
+      codec:
+        json:  # Other options "json", "csv", "parquet"
+      # Provide compression property, can be "none", "gzip", or "automatic"
+      
+      compression: "gzip"       #or automatic
+      aws:
+        region: "ap-northeast-1"
+
+        #생성해준 pipeline의 role
+        sts_role_arn: "arn:aws:iam::851725230407:role/opensearch-s3-pipe-role"
+      acknowledgments: true
+      scan: # Define scan start and end times at scan level. Applicable for all buckets.
+        # start_time: 2023-01-01T18:00:00
+        # end_time: 2023-08-31T18:00:00
+        # Alternatively scan can be defined as range as well. PT4H would scan all files created in the last 4 Hours.
+        # Examples: "PT4H" or "PT30M" or "PT100S" or "P3D" or "P1W"
+        range: "PT10H" #4시간동안 생성된 파일 스캔 
+        buckets:
+          - bucket:
+              name: "aws-waf-logs-ldj-bucket--n3m7qjvn"
+              filter:
+                include_prefix:   #가져올 버킷의 prefix
+                  - AWSLogs/
+                #exclude_suffix:  #세팅할 postfix
+                #  - .jpeg
+                #  - .gz
+          #- bucket: 여러개의 버킷을 대상으로 할 수 있다.
+          #    name: my-bucket-2
+          #    key_prefix:
+          #      include:
+          #        - Objects2/
+          #      exclude_suffix:
+          #        - .jpeg
+          #        - .png
+      delete_s3_objects_on_read: false
+  #processor:
+  #  - date:
+  #      match:
+  #        - key: start
+  #          patterns: ["yyyy-MM-dd'T'HH:mm:ss.SSSXXX"]  
+  #      destination: "@timestamp"
+  #      output_format: "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+  sink:
+    - opensearch:
+        #생성된 OpenSearch Service domain endpoint
+        hosts: ["https://search-ldj-opensearch-test-domain-274gdajy6lcu5uu2r7byb625rq.ap-northeast-1.es.amazonaws.com"]
+
+        #넣어줄 인덱스의 이름
+        index: "waf" 
+        aws:
+          sts_role_arn: "arn:aws:iam::851725230407:role/opensearch-s3-pipe-role"
+          region: "ap-northeast-1"
+          serverless: false
+        #dlq:  실패 데이터 전송
+        #  s3:
+        #    bucket: "my-bucket-1"
+        #    region: "us-east-1"
+        #    sts_role_arn: "arn:aws:iam::{account-id}:role/pipeline-role"
