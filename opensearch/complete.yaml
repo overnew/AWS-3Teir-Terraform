@@ -1,0 +1,212 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  InstanceType:
+    Description: Instance Type for OpenSearch Cluster
+    Type: String
+    Default: t3.medium.search #테스트에는낮은 스펙사용 m5.large.search
+
+  InstanceCount:
+    Description: Number of Instances for OpenSearch Cluster
+    Type: Number
+    Default: 1
+  
+  OSUsername:
+    Description: Username of the OS Admin
+    Type: String
+    Default: mastermaster
+  
+  OSPassword:
+    Description: Password of the OS Admin
+    Type: String
+    Default: 'Master1234$' 
+  
+  OSDomainName:
+    Description: Domain name for OpenSearch
+    Type: String
+    Default: ldj-opensearch-test-domain 
+  
+  OwnerTag:
+    Description: Your initial
+    Type: String
+    Default: ldj
+
+  LogCentralBucketName:
+    Description: 중앙화 버킷의 이름
+    Type: String
+    Default: log-central-ldj-
+
+  ConfigBucketPrefix:
+    Description: Config의 prefix
+    Type: String
+    Default: config/
+  
+  ConfigIndexName:
+    Description: Config의 index명
+    Type: String
+    Default: config
+
+
+Resources:
+  OpenSearch:
+    DependsOn: [OpenSearchPipeRole]
+    Type: AWS::OpenSearchService::Domain
+    Properties:
+      DomainName: !Ref OSDomainName
+      AccessPolicies: #누구를 접속하게 해줄지
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: '*'
+            Action: 'es:*'
+            Resource: '*'
+      #AdvancedOptions: 
+      #  Key: Value
+      AdvancedSecurityOptions:      # Specifies options for fine-grained access control.
+        Enabled: true
+        InternalUserDatabaseEnabled: true  #  이 옵션이 있어야 마스터 유저 생성 가능
+        MasterUserOptions: 
+          MasterUserName: !Ref OSUsername
+          MasterUserPassword: !Ref OSPassword 
+          # 데이터를 바로 넣기 싫다면 dynamic refernece 사용 https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/dynamic-references.html
+      ClusterConfig:
+        InstanceType: !Ref InstanceType
+        InstanceCount: !Ref InstanceCount
+        #ZoneAwarenessEnabled: true
+        #ZoneAwarenessConfig: 
+        #  AvailabilityZoneCount: 3
+
+      #CognitoOptions: 
+      #  CognitoOptions
+      DomainEndpointOptions: # custom endpoint 세팅 가능
+        EnforceHTTPS: true  # 모든 전송을 https로 받음. enable fine-grained access control한 경우 필수
+      EBSOptions:
+        EBSEnabled: true
+        VolumeType: gp2
+        VolumeSize: 10
+      EncryptionAtRestOptions:  # 암호화가 필요한 경우, 
+        Enabled: true
+        # KmsKeyId: String #kms 키를 사용하는 경우 필요
+      EngineVersion: 'OpenSearch_2.13'
+      IPAddressType: 'ipv4'
+      #LogPublishingOptions: 
+      NodeToNodeEncryptionOptions: #노드간의 암호화/ 기본적으로 VPC 내의 트래픽은 암호화되지 않습니다. 
+        Enabled: true
+      #OffPeakWindowOptions:  # 사용량이 적은 시간 설정
+      #  OffPeakWindowOptions
+      #SoftwareUpdateOptions: 
+      #  SoftwareUpdateOptions
+      Tags:
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+
+
+  OpenSearchConfigPipe:
+    DependsOn: [OpenSearch]
+    Type: AWS::OSIS::Pipeline
+    Properties:
+      BufferOptions: 
+         PersistentBufferEnabled: false
+      #EncryptionAtRestOptions:  #암호화 여부
+      #  EncryptionAtRestOptions
+      LogPublishingOptions: 
+          CloudWatchLogDestination: 
+            LogGroup: "/aws/vendedlogs/OpenSearchIngestion/config/audit-logs"
+          IsLoggingEnabled: true
+      MaxUnits: 2
+      MinUnits: 1
+      PipelineConfigurationBody: !Sub |
+        version: "2"
+        log-pipeline:
+          source:
+            s3:
+              codec:
+                json:  # Other options "json", "csv", "parquet"
+              # Provide compression property, can be "none", "gzip", or "automatic"
+              
+              compression: "gzip"       #or automatic
+              aws:
+                region: "${AWS::Region}"
+        
+                #생성해준 pipeline의 role
+                sts_role_arn: "${OpenSearchPipeRole.Arn}"
+              acknowledgments: true
+              scan:
+                range: "PT10H" #4시간동안 생성된 파일 스캔 
+                buckets:
+                  - bucket:
+                      name: "${LogCentralBucketName}"
+                      filter:
+                        include_prefix: "${ConfigBucketPrefix}"
+              delete_s3_objects_on_read: false
+          sink:
+            - opensearch:
+                #생성된 OpenSearch Service domain endpoint
+                hosts: ["${OpenSearch.DomainEndpoint}""]
+                
+                #넣어줄 인덱스의 이름
+                index: "${ConfigIndexName}" 
+                aws:
+                  sts_role_arn: "${OpenSearchPipeRole.Arn}"
+                  region: "${AWS::Region}"
+                  serverless: false
+      PipelineName: !Sub "${OwnerTag}-configpipe"
+      Tags: 
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+      #VpcOptions: 
+      #  VpcOptions
+
+
+  OpenSearchPipeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${OwnerTag}-OpenSearchPipeRole'
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: #[firehose.amazonaws.com, s3.amazonaws.com]
+                - osis-pipelines.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: S3FullAccess  #s3에 저장을 위한 권한
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ['s3:*', 's3-object-lambda:*']
+                Resource: '*'
+        - PolicyName: pipeOpensearchAcccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ['es:DescribeDomain', 'es:ESHttp*']
+                Resource: '*'
+      Tags:
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+  
+  #PipeLogGroup:
+  #  Type: AWS::Logs::LogGroup
+  #  Properties:
+  #    DataProtectionPolicy: Json
+  #    #KmsKeyId: String
+  #    #LogGroupClass: String # Infrequent Access로 가능
+  #    LogGroupName: "/aws/vendedlogs/OpenSearchIngestion/config/audit-logs"
+  #    RetentionInDays: 1   #유지 기간
+  #    Tags:
+  #      -
+  #        Key: owner
+  #        Value: !Ref OwnerTag
+
+Outputs:
+  OpenSearchEndpoint:
+    Description: OpenSearch Endpoint URL
+    Value: !Sub ${OpenSearch.DomainEndpoint}
