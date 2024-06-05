@@ -1,0 +1,429 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  OwnerTag:
+    Description: Your initial
+    Type: String
+    Default: ldj
+
+  OpenSearchDomainEndpoint:
+    Description: 생성된 Opensearch의 도메인 엔드포인트
+    Type: String
+    Default: https://search-ldj-opensearch-test-domain-274gdajy6lcu5uu2r7byb625rq.ap-northeast-1.es.amazonaws.com
+
+  OpenSearchPipeRoleARN:
+    Description: pipe role's arn
+    Type: String
+    Default: arn:aws:iam::851725230407:role/
+
+  LoadDataRange:
+    Description: data range
+    Type: String
+    Default: PT10H
+
+  LogCentralBucketName:
+    Description: Central log bucket name
+    Type: String
+    Default: log-central-ldj-9l6udbac
+
+  WAFLogBucketName:
+    Description: waf log bucket name
+    Type: String
+    Default: aws-waf-logs-ldj-bucket--8osi22ja
+
+  anfwBucketPrefix:
+    Description: anfw의 prefix
+    Type: String
+    Default: networkfirewall/
+  
+  anfwIndexName:
+    Description: anfw의 index명
+    Type: String
+    Default: anfw
+
+  VPCflowBucketPrefix:
+    Description: WAF Bucket Prefix
+    Type: String
+    Default: AWSLogs/851725230407/vpcflowlogs/
+
+  VPCflowIndexName:
+    Description: anfw의 index명
+    Type: String
+    Default: vpcflowlog
+
+  ConfigBucketPrefix:
+    Description: WAF Bucket Prefix
+    Type: String
+    Default: config/
+
+  ConfigIndexName:
+    Description: anfw의 index명
+    Type: String
+    Default: configlog
+
+  CloudtrailBucketPrefix:
+    Description: WAF Bucket Prefix
+    Type: String
+    Default: cloudtrail/
+
+  CloudtrailIndexName:
+    Description: anfw의 index명
+    Type: String
+    Default: cloudtraillog
+
+  WAFBucketPrefix:
+    Description: WAF Bucket Prefix
+    Type: String
+    Default: AWSLogs/851725230407/WAFLogs/
+  
+  WAFIndexName:
+    Description: anfw의 index명
+    Type: String
+    Default: waflog
+
+
+Resources:
+  OpenSearchANFWPipe:
+    DependsOn: [PipeLogGroupANFW]
+    Type: AWS::OSIS::Pipeline
+    Properties:
+      BufferOptions: 
+         PersistentBufferEnabled: false
+      #EncryptionAtRestOptions:  #암호화 여부
+      #  EncryptionAtRestOptions
+      LogPublishingOptions: 
+          CloudWatchLogDestination: 
+            LogGroup: !Sub "/aws/vendedlogs/OpenSearchIngestion/${OwnerTag}anwf/audit-logs"
+          IsLoggingEnabled: true
+      MaxUnits: 2
+      MinUnits: 1
+      PipelineConfigurationBody: !Sub |
+        version: "2"
+        log-pipeline:
+          source:
+            s3:
+              codec:
+                newline:  # Other options "json", "csv", "parquet"
+              # Provide compression property, can be "none", "gzip", or "automatic"
+              
+              compression: "gzip"       #or automatic
+              aws:
+                region: "${AWS::Region}"
+        
+                #생성해준 pipeline의 role
+                sts_role_arn: "${OpenSearchPipeRoleARN}"
+              acknowledgments: true
+              scan: # Define scan start and end times at scan level. Applicable for all buckets.
+                # start_time: 2023-01-01T18:00:00
+                # end_time: 2023-08-31T18:00:00
+                # Alternatively scan can be defined as range as well. PT4H would scan all files created in the last 4 Hours.
+                # Examples: "PT4H" or "PT30M" or "PT100S" or "P3D" or "P1W"
+                range: "${LoadDataRange}"
+                buckets:
+                  - bucket:
+                      name: "${LogCentralBucketName}"
+                      filter:
+                        include_prefix: 
+                          - "${anfwBucketPrefix}"
+              delete_s3_objects_on_read: false
+          processor:
+            - parse_json:
+                pointer: "message/event"
+          sink:
+            - opensearch:
+                hosts:
+                  ["${OpenSearchDomainEndpoint}"]
+                index: "${anfwIndexName}"
+                aws:
+                  sts_role_arn: "${OpenSearchPipeRoleARN}"
+                  region: "${AWS::Region}"
+                  serverless: false
+      PipelineName: !Sub "${OwnerTag}-anwfpipe"
+      Tags: 
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+  PipeLogGroupANFW:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      #DataProtectionPolicy: Json
+      #KmsKeyId: String
+      #LogGroupClass: String # Infrequent Access로 가능
+      LogGroupName: !Sub "/aws/vendedlogs/OpenSearchIngestion/${OwnerTag}anwf/audit-logs"
+      RetentionInDays: 3   #유지 기간
+      Tags:
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+
+
+  OpenSearchConfigPipe:
+    DependsOn: [PipeLogGroupConfig]
+    Type: AWS::OSIS::Pipeline
+    Properties:
+      BufferOptions: 
+         PersistentBufferEnabled: false
+      #EncryptionAtRestOptions:  #암호화 여부
+      #  EncryptionAtRestOptions
+      LogPublishingOptions: 
+          CloudWatchLogDestination: 
+            LogGroup: !Sub "/aws/vendedlogs/OpenSearchIngestion/${OwnerTag}config/audit-logs"
+          IsLoggingEnabled: true
+      MaxUnits: 2
+      MinUnits: 1
+      PipelineConfigurationBody: !Sub |
+        version: "2"
+        log-pipeline:
+          source:
+            s3:
+              codec:
+                json:  # Other options "json", "csv", "parquet"
+              # Provide compression property, can be "none", "gzip", or "automatic"
+              
+              compression: "gzip"       #or automatic
+              aws:
+                region: "${AWS::Region}"
+        
+                #생성해준 pipeline의 role
+                sts_role_arn: "${OpenSearchPipeRoleARN}"
+              acknowledgments: true
+              scan:
+                range: "${LoadDataRange}"
+                buckets:
+                  - bucket:
+                      name: "${LogCentralBucketName}"
+                      filter:
+                        include_prefix:   #가져올 버킷의 prefix
+                          - "${ConfigBucketPrefix}"
+              delete_s3_objects_on_read: false
+          sink:
+            - opensearch:
+                #생성된 OpenSearch Service domain endpoint
+                hosts: 
+                  ["${OpenSearchDomainEndpoint}"]
+                #넣어줄 인덱스의 이름
+                index: "${ConfigIndexName}"
+                aws:
+                  sts_role_arn: "${OpenSearchPipeRoleARN}"
+                  region: "${AWS::Region}"
+                  serverless: false
+      PipelineName: !Sub "${OwnerTag}-configpipe"
+      Tags: 
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+  PipeLogGroupConfig:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      #DataProtectionPolicy: Json
+      #KmsKeyId: String
+      #LogGroupClass: String # Infrequent Access로 가능
+      LogGroupName: !Sub "/aws/vendedlogs/OpenSearchIngestion/${OwnerTag}config/audit-logs"
+      RetentionInDays: 3   #유지 기간
+      Tags:
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+
+
+  OpenSearchVpcFlowPipe:
+    DependsOn: [PipeLogGroupVPCFlow]
+    Type: AWS::OSIS::Pipeline
+    Properties:
+      BufferOptions: 
+         PersistentBufferEnabled: false
+      #EncryptionAtRestOptions:  #암호화 여부
+      #  EncryptionAtRestOptions
+      LogPublishingOptions: 
+          CloudWatchLogDestination: 
+            LogGroup: !Sub "/aws/vendedlogs/OpenSearchIngestion/${OwnerTag}vpcflow/audit-logs"
+          IsLoggingEnabled: true
+      MaxUnits: 2
+      MinUnits: 1
+      PipelineConfigurationBody: !Sub |
+        version: "2"
+        log-pipeline:
+          source:
+            s3:
+              codec:
+                newline:  # Other options "json", "csv", "parquet"
+              # Provide compression property, can be "none", "gzip", or "automatic"
+              
+              compression: "gzip"       #or automatic
+              aws:
+                region: "${AWS::Region}"
+        
+                #생성해준 pipeline의 role
+                sts_role_arn: "${OpenSearchPipeRoleARN}"
+              acknowledgments: true
+              scan: # Examples: "PT4H" or "PT30M" or "PT100S" or "P3D" or "P1W"
+                range: "${LoadDataRange}"
+                buckets:
+                  - bucket:
+                      name: "${LogCentralBucketName}"
+                      filter:
+                        include_prefix:   #가져올 버킷의 prefix
+                          - "${VPCflowBucketPrefix}"
+              delete_s3_objects_on_read: false
+          processor:
+            - date:
+                destination: "@timestamp"
+                from_time_received: true
+          sink:
+            - opensearch:
+                #생성된 OpenSearch Service domain endpoint
+                hosts: 
+                  ["${OpenSearchDomainEndpoint}"]
+                index: "${VPCflowIndexName}"
+                aws:
+                  sts_role_arn: "${OpenSearchPipeRoleARN}"
+                  region: "${AWS::Region}"
+                  serverless: false
+      PipelineName: !Sub "${OwnerTag}-vpcpipe"
+      Tags: 
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+  PipeLogGroupVPCFlow:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      #DataProtectionPolicy: Json
+      #KmsKeyId: String
+      #LogGroupClass: String # Infrequent Access로 가능
+      LogGroupName: !Sub "/aws/vendedlogs/OpenSearchIngestion/${OwnerTag}vpcflow/audit-logs"
+      RetentionInDays: 3   #유지 기간
+      Tags:
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+
+  OpenSearchTrailPipe:
+    DependsOn: [PipeLogGroupTrail]
+    Type: AWS::OSIS::Pipeline
+    Properties:
+      BufferOptions: 
+         PersistentBufferEnabled: false
+      #EncryptionAtRestOptions:  #암호화 여부
+      #  EncryptionAtRestOptions
+      LogPublishingOptions: 
+          CloudWatchLogDestination: 
+            LogGroup: !Sub "/aws/vendedlogs/OpenSearchIngestion/${OwnerTag}-trail/audit-logs"
+          IsLoggingEnabled: true
+      MaxUnits: 2
+      MinUnits: 1
+      PipelineConfigurationBody: !Sub |
+        version: "2"
+        log-pipeline:
+          source:
+            s3:
+              codec:
+                json:  # Other options "json", "csv", "parquet"
+              # Provide compression property, can be "none", "gzip", or "automatic"
+              
+              compression: "gzip"       #or automatic
+              aws:
+                region: "${AWS::Region}"
+                sts_role_arn: "${OpenSearchPipeRoleARN}"
+              acknowledgments: true
+              scan: # Examples: "PT4H" or "PT30M" or "PT100S" or "P3D" or "P1W"
+                range: "${LoadDataRange}"
+                buckets:
+                  - bucket:
+                      name: "${LogCentralBucketName}"
+                      filter:
+                        include_prefix:   #가져올 버킷의 prefix
+                          - "${CloudtrailBucketPrefix}"
+              delete_s3_objects_on_read: false
+          sink:
+            - opensearch:
+                #생성된 OpenSearch Service domain endpoint
+                hosts: 
+                  ["${OpenSearchDomainEndpoint}"]
+                index: "${CloudtrailIndexName}"
+                aws:
+                  sts_role_arn: "${OpenSearchPipeRoleARN}"
+                  region: "${AWS::Region}"
+                  serverless: false       
+      PipelineName: !Sub "${OwnerTag}-trailpipe"
+      Tags: 
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+  PipeLogGroupTrail:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      #DataProtectionPolicy: Json
+      #KmsKeyId: String
+      #LogGroupClass: String # Infrequent Access로 가능
+      LogGroupName: !Sub "/aws/vendedlogs/OpenSearchIngestion/${OwnerTag}-trail/audit-logs"
+      RetentionInDays: 3   #유지 기간
+      Tags:
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+
+
+  OpenSearchWAFPipe:
+    DependsOn: [PipeLogGroupWAF]
+    Type: AWS::OSIS::Pipeline
+    Properties:
+      BufferOptions: 
+         PersistentBufferEnabled: false
+      #EncryptionAtRestOptions:  #암호화 여부
+      #  EncryptionAtRestOptions
+      LogPublishingOptions: 
+          CloudWatchLogDestination: 
+            LogGroup: !Sub "/aws/vendedlogs/OpenSearchIngestion/${OwnerTag}-waf/audit-logs"
+          IsLoggingEnabled: true
+      MaxUnits: 2
+      MinUnits: 1
+      PipelineConfigurationBody: !Sub |
+        version: "2"
+        log-pipeline:
+          source:
+            s3:
+              codec:
+                json:  # Other options "json", "csv", "parquet"
+              # Provide compression property, can be "none", "gzip", or "automatic"
+              
+              compression: "gzip"       #or automatic
+              aws:
+                region: "${AWS::Region}"
+                sts_role_arn: "${OpenSearchPipeRoleARN}"
+              acknowledgments: true
+              scan: # Examples: "PT4H" or "PT30M" or "PT100S" or "P3D" or "P1W"
+                range: "${LoadDataRange}"
+                buckets:
+                  - bucket:
+                      name: "${WAFLogBucketName}"
+                      filter:
+                        include_prefix:   #가져올 버킷의 prefix
+                          - "${WAFBucketPrefix}"
+              delete_s3_objects_on_read: false
+          sink:
+            - opensearch:
+                #생성된 OpenSearch Service domain endpoint
+                hosts: 
+                  ["${OpenSearchDomainEndpoint}"]
+                index: "${WAFIndexName}"
+                aws:
+                  sts_role_arn: "${OpenSearchPipeRoleARN}"
+                  region: "${AWS::Region}"
+                  serverless: false  
+      PipelineName: !Sub "${OwnerTag}-wafpipe"
+      Tags: 
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+  PipeLogGroupWAF:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      #DataProtectionPolicy: Json
+      #KmsKeyId: String
+      #LogGroupClass: String # Infrequent Access로 가능
+      LogGroupName: !Sub "/aws/vendedlogs/OpenSearchIngestion/${OwnerTag}-waf/audit-logs"
+      RetentionInDays: 3   #유지 기간
+      Tags:
+        -
+          Key: owner
+          Value: !Ref OwnerTag

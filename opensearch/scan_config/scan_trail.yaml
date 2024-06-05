@@ -55,8 +55,3 @@ log-pipeline:
           sts_role_arn: "arn:aws:iam::851725230407:role/opensearch-s3-pipe-role"
           region: "ap-northeast-1"
           serverless: false
-        #dlq:  실패 데이터 전송
-        #  s3:
-        #    bucket: "my-bucket-1"
-        #    region: "us-east-1"
-        #    sts_role_arn: "arn:aws:iam::{account-id}:role/pipeline-role"

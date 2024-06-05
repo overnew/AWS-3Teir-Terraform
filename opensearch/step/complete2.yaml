@@ -1,0 +1,103 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  OwnerTag:
+    Description: Your initial
+    Type: String
+    Default: ldj
+
+  OpenSearchDomainEndpoint:
+    Description: 생성된 Opensearch의 도메인 엔드포인트
+    Type: String
+    Default: https://search-ldj-opensearch-test-domain-274gdajy6lcu5uu2r7byb625rq.ap-northeast-1.es.amazonaws.com
+
+  OpenSearchPipeRoleARN:
+    Description: 생성된 role의 arn
+    Type: String
+    Default: arn:aws:iam::851725230407:role/
+
+  LogCentralBucketName:
+    Description: 중앙화 버킷의 이름
+    Type: String
+    Default: log-central-ldj-
+
+  ConfigBucketPrefix:
+    Description: Config의 prefix
+    Type: String
+    Default: config/
+  
+  ConfigIndexName:
+    Description: Config의 index명
+    Type: String
+    Default: config
+
+
+Resources:
+  OpenSearchConfigPipe:
+    Type: AWS::OSIS::Pipeline
+    Properties:
+      BufferOptions: 
+         PersistentBufferEnabled: false
+      #EncryptionAtRestOptions:  #암호화 여부
+      #  EncryptionAtRestOptions
+      LogPublishingOptions: 
+          CloudWatchLogDestination: 
+            LogGroup: !Sub "/aws/vendedlogs/OpenSearchIngestion/${OwnerTag}config/audit-logs"
+          IsLoggingEnabled: true
+      MaxUnits: 2
+      MinUnits: 1
+      PipelineConfigurationBody: !Sub |
+        version: "2"
+        log-pipeline:
+          source:
+            s3:
+              codec:
+                json:  # Other options "json", "csv", "parquet"
+              # Provide compression property, can be "none", "gzip", or "automatic"
+              
+              compression: "gzip"       #or automatic
+              aws:
+                region: "${AWS::Region}"
+        
+                #생성해준 pipeline의 role
+                sts_role_arn: "${OpenSearchPipeRoleARN}"
+              acknowledgments: true
+              scan:
+                range: "PT10H" #10시간동안 생성된 파일 스캔 
+                buckets:
+                  - bucket:
+                      name: "${LogCentralBucketName}"
+                      filter:
+                        include_prefix: "${ConfigBucketPrefix}"
+              delete_s3_objects_on_read: false
+          sink:
+            - opensearch:
+                #생성된 OpenSearch Service domain endpoint
+                hosts: ["${OpenSearchDomainEndpoint}"]
+                
+                #넣어줄 인덱스의 이름
+                index: "${ConfigIndexName}" 
+                aws:
+                  sts_role_arn: "${OpenSearchPipeRoleARN}"
+                  region: "${AWS::Region}"
+                  serverless: false
+      PipelineName: !Sub "${OwnerTag}-configpipe"
+      Tags: 
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+      #VpcOptions: 
+      #  VpcOptions
+
+  #PipeLogGroup:
+  #  Type: AWS::Logs::LogGroup
+  #  Properties:
+  #    DataProtectionPolicy: Json
+  #    #KmsKeyId: String
+  #    #LogGroupClass: String # Infrequent Access로 가능
+  #    LogGroupName: "/aws/vendedlogs/OpenSearchIngestion/config/audit-logs"
+  #    RetentionInDays: 1   #유지 기간
+  #    Tags:
+  #      -
+  #        Key: owner
+  #        Value: !Ref OwnerTag
