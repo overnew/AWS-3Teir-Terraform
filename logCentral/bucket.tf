@@ -63,6 +63,12 @@ resource "aws_s3_bucket_policy" "s3_example_bucket_policy" {
 }
 
 
+resource "aws_s3_bucket_versioning" "versioning" {
+  bucket = aws_s3_bucket.log_central_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
 
 resource "random_string" "bucket_random_id" {
   length  = 8
