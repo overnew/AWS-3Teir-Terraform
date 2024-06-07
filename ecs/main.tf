@@ -275,7 +275,7 @@ resource "aws_appautoscaling_policy" "ecs_web_scale_in" {
 
 # scaling in 알람
 resource "aws_cloudwatch_metric_alarm" "inscaling_metric_alarm" {
-  
+  count = 0
   alarm_name          = "${local.web_name}-inscaling-metric-alarm"
   comparison_operator = "LessThanOrEqualToThreshold"  # 임계치보다 낮은 경우 트리거
   evaluation_periods  = "1"

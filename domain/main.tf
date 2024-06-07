@@ -1,6 +1,6 @@
 resource "aws_route53_record" "alias_route53_record" {
   zone_id = data.aws_route53_zone.milipresso_zone.zone_id
-  name    = "www.${data.aws_route53_zone.milipresso_zone.name}"
+  name    = "*.${data.aws_route53_zone.milipresso_zone.name}"
   type    = "A"
 
   alias {
