@@ -1,4 +1,4 @@
-
+#us-east-1 리전의 경우
 /*
 resource "aws_route53_query_log" "milipresso_log" {
   depends_on = [aws_cloudwatch_log_resource_policy.route53-query-logging-policy]

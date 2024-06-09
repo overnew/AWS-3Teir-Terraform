@@ -35,7 +35,7 @@ resource "aws_ecs_task_definition" "web_task" {
     {
       name      = "web"
     #image 주소
-      image     = "851725230407.dkr.ecr.ap-northeast-1.amazonaws.com/name:web02" 
+      image     = "851725230407.dkr.ecr.ap-northeast-1.amazonaws.com/milliweb:web02" 
       #"851725230407.dkr.ecr.ap-northeast-1.amazonaws.com/name:apache" 
       #cpu       = 10
       #memory    = 512

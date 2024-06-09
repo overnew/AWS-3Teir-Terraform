@@ -24,7 +24,7 @@ Parameters:
   OSDomainName:
     Description: Domain name for OpenSearch
     Type: String
-    Default: ldj-opensearch-test-domain 
+    Default: ldj-opensearch-test-domain2
   
   OwnerTag:
     Description: Your initial
@@ -91,7 +91,7 @@ Resources:
   OpenSearchPipeRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub '${OwnerTag}-OpenSearchPipeRole'
+      RoleName: !Sub '${OwnerTag}-OpenSearchPipeRole1'
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow

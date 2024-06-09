@@ -175,7 +175,7 @@ module "web_service" {
 module "codepipe_web" {
   depends_on = [ module.ecs ]
   source = "./cicd"
-  #count = 0  # disable
+  count = 0  # disable
   
   region = var.region
   project_name = "web-ci-cd"
@@ -208,7 +208,7 @@ module "codepipe_web" {
 module "codepipe_app" {
   depends_on = [ module.ecs ]
   source = "./cicd"
-  #count = 0  # disable
+  count = 0  # disable
   
   region = var.region
   project_name = "app-ci-cd"
