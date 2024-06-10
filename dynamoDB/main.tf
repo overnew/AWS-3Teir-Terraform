@@ -14,7 +14,7 @@ resource "aws_dynamodb_table" "user_table" {
     name = "email"
     type = "S"
   }
-
+/*
   attribute {
     name = "id"
     type = "S"
@@ -28,7 +28,7 @@ resource "aws_dynamodb_table" "user_table" {
   attribute {
     name = "password"
     type = "S"
-  }
+  }*/
 
   #ttl {
   #  attribute_name = "TimeToExist"

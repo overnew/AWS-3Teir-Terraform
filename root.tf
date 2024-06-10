@@ -204,6 +204,9 @@ module "codepipe_web" {
   test_listener_port = 8080
 }
 
+module "dynamodb" {
+  source = "./dynamoDB"
+}
 
 module "codepipe_app" {
   depends_on = [ module.ecs ]
