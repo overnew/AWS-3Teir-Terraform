@@ -201,7 +201,7 @@ resource "aws_appautoscaling_policy" "ecs_web_scale_out" {
     adjustment_type         = "ChangeInCapacity"
 
     #cooldown은 스케일링 후 다음 스케일링까지의 유예 시간
-    cooldown                = 3
+    cooldown                = 120
 
     #Average가 default
     metric_aggregation_type = "Average" #"Maximum"
@@ -256,7 +256,7 @@ resource "aws_appautoscaling_policy" "ecs_web_scale_in" {
     adjustment_type         = "ChangeInCapacity"
 
     #cooldown은 스케일링 후 다음 스케일링까지의 유예 시간
-    cooldown                = 3
+    cooldown                = 120
 
     #Average가 default
     metric_aggregation_type = "Average" #"Maximum"

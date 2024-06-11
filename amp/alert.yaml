@@ -1,0 +1,21 @@
+alertmanager_config: |
+  route: 
+    receiver: 'default_receiver'
+    repeat_interval: 1m
+
+  route:
+    group_by: ['alertname']
+    group_wait: 30s
+    group_interval: 1m
+    repeat_interval: 2m
+    receiver: Demo_Receiver
+  receivers:
+    - name: 'default_receiver'
+      sns_configs:
+        - topic_arn: arn:aws:sns:ap-northeast-1:851725230407:ldj-slack-alerts
+          send_resolved: false
+          sigv4:
+            region: ap-northeast-1
+          message: |
+            alert_type: {{ .CommonLabels.alertname }}
+            event_type: {{ .CommonLabels.event_type }}

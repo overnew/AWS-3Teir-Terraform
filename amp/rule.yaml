@@ -1,0 +1,12 @@
+groups:
+- name: example
+  rules:
+  - alert: HostHighCpuLoad
+    expr: 100 - (avg(rate(ecs_task_cpu_utilized_None[1m])) * 100) > 60
+    for: 5m
+    labels:
+      severity: warning
+      event_type: scale_up
+    annotations:
+      summary: Host high CPU load (instance {{ $labels.instance }})
+      description: "CPU load is > 60%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

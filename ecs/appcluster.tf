@@ -142,7 +142,7 @@ resource "aws_appautoscaling_target" "ecs_app_target" {
 
 resource "aws_appautoscaling_policy" "ecs_app_scale_out" {
   
-  name               = "${local.web_name}-auto-scaling-out"
+  name               = "${local.app_name}-auto-scaling-out"
   policy_type        = "StepScaling"
   resource_id        = aws_appautoscaling_target.ecs_app_target.resource_id
   scalable_dimension = aws_appautoscaling_target.ecs_app_target.scalable_dimension
@@ -153,7 +153,7 @@ resource "aws_appautoscaling_policy" "ecs_app_scale_out" {
     adjustment_type         = "ChangeInCapacity"
 
     #cooldown은 스케일링 후 다음 스케일링까지의 유예 시간
-    cooldown                = 3
+    cooldown                = 120
 
     #Average가 default
     metric_aggregation_type = "Average" #"Maximum"
@@ -208,7 +208,7 @@ resource "aws_appautoscaling_policy" "ecs_app_scale_in" {
     adjustment_type         = "ChangeInCapacity"
 
     #cooldown은 스케일링 후 다음 스케일링까지의 유예 시간
-    cooldown                = 3
+    cooldown                = 120
 
     #Average가 default
     metric_aggregation_type = "Average" #"Maximum"
@@ -229,7 +229,7 @@ resource "aws_appautoscaling_policy" "ecs_app_scale_in" {
 resource "aws_cloudwatch_metric_alarm" "app_inscaling_metric_alarm" {
   
   count = 0   #지속적인 경고로 일단 제거
-  alarm_name          = "${local.web_name}-inscaling-metric-alarm"
+  alarm_name          = "${local.app_name}-inscaling-metric-alarm"
   comparison_operator = "LessThanOrEqualToThreshold"  # 임계치보다 낮은 경우 트리거
   evaluation_periods  = "1"
   metric_name         = "CPUUtilization"

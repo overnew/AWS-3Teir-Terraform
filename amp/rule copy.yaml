@@ -1,0 +1,24 @@
+groups:
+- name: example
+  rules:
+  - alert: HostHighCpuLoad
+    expr: avg(rate(ecs_task_cpu_utilized_None[1m])) 
+    #  - alert: scaleIn
+    #expr: sum(avg_over_time(ecs_task_cpu_utilized_None{TaskDefinitionFamily="web-service"}[1m])/count(avg_over_time(ecs_task_cpu_utilized_None{TaskDefinitionFamily="web-service"}[1m]))) < 10
+    for: 1m
+    labels:
+      severity: warning
+      event_type: scale_up
+    annotations:
+      summary: Host high CPU load 
+      description: "CPU load is > 60"
+groups:
+- name: ecs_cpu_usage
+  rules:
+  - expr: avg(ecs_container_cpu_usage{namespace="YOUR_NAMESPACE", task="YOUR_TASK_DEFINITION"} > 60)
+    labels:
+      severity: warning
+      alertname: ECSTaskHighCPUUsage
+    annotations:
+      summary: "ECS Task CPU Usage превысил 60%"
+      description: "Namespace {{namespace}} 내 Task {{task}} 의 CPU 사용률이 60%를 초과했습니다."

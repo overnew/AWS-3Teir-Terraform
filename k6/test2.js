@@ -8,16 +8,16 @@ insecureSkipTLSVerify: true,
 noConnectionReuse: false,
 stages: [
     {
-        duration: '60s',
-        target: 6000
+        duration: '120s',
+        target: 3000
     },    
     {
         duration: '120s',
-        target: 6000
+        target: 3000
     },
     {
         duration: '120s',
-        target: 2000
+        target: 1000
     },
     {
         duration: '30s',
