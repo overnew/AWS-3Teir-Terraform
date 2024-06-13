@@ -67,7 +67,7 @@ resource "aws_ecs_task_definition" "web_task" {
     },
     {
             "name": "aws-otel-collector",
-            "image": "public.ecr.aws/aws-observability/aws-otel-collector:v0.39.0",
+            "image": "851725230407.dkr.ecr.ap-northeast-1.amazonaws.com/otel:v0.39.0",
             "cpu": 0,
             "portMappings": [],
             "essential": true,
@@ -179,7 +179,7 @@ resource "aws_ecs_service" "web_service" {
 #### auto
 #ecs task auto scaling
 resource "aws_appautoscaling_target" "ecs_web_target" {
-  max_capacity       = 4
+  max_capacity       = 10
   min_capacity       = 1
   resource_id        = "service/${aws_ecs_cluster.web_cluster.name}/${aws_ecs_service.web_service.name}" 
   #"service/${var.web_cluster_name}/${var.name_ecs_service}"
@@ -208,10 +208,23 @@ resource "aws_appautoscaling_policy" "ecs_web_scale_out" {
 
     step_adjustment {
       metric_interval_lower_bound = 0
-      #metric_interval_upper_bound = 60
+      metric_interval_upper_bound = 10
 
       #scaling 개수, 음 or 양
       scaling_adjustment          = 1
+    }
+
+    step_adjustment {
+      metric_interval_lower_bound = 10
+      metric_interval_upper_bound = 20
+
+      scaling_adjustment          = 2
+    }
+
+    step_adjustment {
+      metric_interval_lower_bound = 20
+
+      scaling_adjustment          = 3
     }
   }
 
@@ -227,9 +240,9 @@ resource "aws_cloudwatch_metric_alarm" "outscaling_metric_alarm" {
   evaluation_periods  = "1"
   metric_name         = "CPUUtilization"
   namespace           = "AWS/ECS"
-  period              = "60"
+  period              = "30"
   statistic           = "Average"
-  threshold           = "60"
+  threshold           = "30"
 
   dimensions = {
     ClusterName = "${aws_ecs_cluster.web_cluster.name}"
@@ -283,7 +296,7 @@ resource "aws_cloudwatch_metric_alarm" "inscaling_metric_alarm" {
   namespace           = "AWS/ECS"
   period              = "30"
   statistic           = "Average"
-  threshold           = "20"
+  threshold           = "15"
 
   dimensions = {
     ClusterName = "${aws_ecs_cluster.web_cluster.name}"

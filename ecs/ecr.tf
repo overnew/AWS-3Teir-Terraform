@@ -1,3 +1,40 @@
+/*
+resource "aws_ecr_repository" "otel" {
+  name                 = "otel"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = false
+  }
+}
+
+#ECR lifecycle
+resource "aws_ecr_lifecycle_policy" "web" {
+  repository = aws_ecr_repository.web.name
+
+  policy = <<EOF
+{
+    "rules": [
+        {
+            "rulePriority": 1,
+            "description": "Expire images older than 35 days",
+            "selection": {
+                "tagStatus": "any",
+                "countType": "sinceImagePushed",
+                "countUnit": "days",
+                "countNumber": 35
+            },
+            "action": {
+                "type": "expire"
+            }
+        }
+    ]
+}
+EOF
+}
+
+
+
 resource "aws_ecr_repository" "app" {
   #count = 0
   name                 = "milliapp"
@@ -98,7 +135,7 @@ resource "aws_ecr_lifecycle_policy" "web" {
 EOF
 }
 
-
+*/
 #inspector 활성화
 data "aws_caller_identity" "current" {}
 
@@ -106,3 +143,4 @@ resource "aws_inspector2_enabler" "image_scan" {
   account_ids    = [data.aws_caller_identity.current.account_id]
   resource_types = ["ECR"]
 }
+

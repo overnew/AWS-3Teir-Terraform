@@ -46,6 +46,7 @@ resource "aws_dynamodb_table" "user_table" {
 }
 
 resource "aws_appautoscaling_target" "dynamodb_table_read_target" {
+  depends_on = [ aws_dynamodb_table.user_table ]
   max_capacity       = 10
   min_capacity       = 1
   resource_id        = "table/${local.user_table_name}"
@@ -71,6 +72,7 @@ resource "aws_appautoscaling_policy" "dynamodb_table_read_policy" {
 
 
 resource "aws_appautoscaling_target" "dynamodb_table_write_target" {
+  depends_on = [ aws_dynamodb_table.user_table ]
   max_capacity       = 10
   min_capacity       = 1
   resource_id        = "table/${local.user_table_name}"

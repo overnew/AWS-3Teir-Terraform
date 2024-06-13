@@ -55,7 +55,7 @@ resource "aws_ecs_task_definition" "app_task" {
     } 
     ,{
             "name": "aws-otel-collector",
-            "image": "public.ecr.aws/aws-observability/aws-otel-collector:v0.39.0",
+            "image": "851725230407.dkr.ecr.ap-northeast-1.amazonaws.com/otel:v0.39.0",
             "cpu": 0,
             "portMappings": [],
             "essential": true,
@@ -132,7 +132,7 @@ resource "aws_ecs_service" "app_service" {
 #### auto
 #ecs task auto scaling
 resource "aws_appautoscaling_target" "ecs_app_target" {
-  max_capacity       = 4
+  max_capacity       = 10
   min_capacity       = 1
   resource_id        = "service/${aws_ecs_cluster.app_cluster.name}/${aws_ecs_service.app_service.name}" 
 
@@ -156,14 +156,28 @@ resource "aws_appautoscaling_policy" "ecs_app_scale_out" {
     cooldown                = 120
 
     #Average가 default
-    metric_aggregation_type = "Average" #"Maximum"
+    metric_aggregation_type = "Maximum" #"Maximum"
+
 
     step_adjustment {
       metric_interval_lower_bound = 0
-      #metric_interval_upper_bound = 60
+      metric_interval_upper_bound = 10
 
       #scaling 개수, 음 or 양
       scaling_adjustment          = 1
+    }
+
+    step_adjustment {
+      metric_interval_lower_bound = 10
+      metric_interval_upper_bound = 20
+
+      scaling_adjustment          = 2
+    }
+
+    step_adjustment {
+      metric_interval_lower_bound = 20
+
+      scaling_adjustment          = 3
     }
   }
 
@@ -177,11 +191,11 @@ resource "aws_cloudwatch_metric_alarm" "app_outscaling_metric_alarm" {
   alarm_name          = "${local.app_name}-outscaling-metric-alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = "1"
-  metric_name         = "CPUUtilization"
+  metric_name         = "MemoryUtilization"
   namespace           = "AWS/ECS"
-  period              = "60"
+  period              = "30"
   statistic           = "Average"
-  threshold           = "60"
+  threshold           = "30"
 
   dimensions = {
     ClusterName = "${aws_ecs_cluster.app_cluster.name}"
@@ -232,11 +246,11 @@ resource "aws_cloudwatch_metric_alarm" "app_inscaling_metric_alarm" {
   alarm_name          = "${local.app_name}-inscaling-metric-alarm"
   comparison_operator = "LessThanOrEqualToThreshold"  # 임계치보다 낮은 경우 트리거
   evaluation_periods  = "1"
-  metric_name         = "CPUUtilization"
+  metric_name         = "MemoryUtilization"
   namespace           = "AWS/ECS"
   period              = "30"
   statistic           = "Average"
-  threshold           = "20"
+  threshold           = "15"
 
   dimensions = {
     ClusterName = "${aws_ecs_cluster.app_cluster.name}"

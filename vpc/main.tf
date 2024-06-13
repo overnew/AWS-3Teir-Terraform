@@ -318,7 +318,8 @@ resource "aws_route_table_association" "private_c" {
 }
 
 #기본 private subnet
-resource "aws_route_table" "private_rt_default" {
+
+resource "aws_route_table" "private_rt_default_a" {
   vpc_id = aws_vpc.vpc_name.id
 
   route {
@@ -328,14 +329,36 @@ resource "aws_route_table" "private_rt_default" {
 
   tags = merge(
     {
-      Name = format("%s-%s",var.private_rt_name, "c")
+      Name = format("%s-%s-%s",var.private_rt_name, "default","a")
     },
     var.default_tag
   )
 }
 
-resource "aws_route_table_association" "private_default" {
-  for_each       = toset(["web_sub_1a", "web_sub_2c","db_sub_1a", "db_sub_2c"])
+resource "aws_route_table" "private_rt_default_c" {
+  vpc_id = aws_vpc.vpc_name.id
+
+  route {
+    cidr_block = var.vpc_cidr_block
+    gateway_id = "local"
+  }
+
+  tags = merge(
+    {
+      Name = format("%s-%s-%s",var.private_rt_name, "default","c")
+    },
+    var.default_tag
+  )
+}
+
+resource "aws_route_table_association" "private_default_a" {
+  for_each       = toset(["web_sub_1a","db_sub_1a"])
   subnet_id      = aws_subnet.private_subnets[each.key].id
-  route_table_id = aws_route_table.private_rt_a.id
+  route_table_id = aws_route_table.private_rt_default_a.id
+}
+
+resource "aws_route_table_association" "private_default_c" {
+  for_each       = toset(["web_sub_2c", "db_sub_2c"])
+  subnet_id      = aws_subnet.private_subnets[each.key].id
+  route_table_id = aws_route_table.private_rt_default_c.id
 }

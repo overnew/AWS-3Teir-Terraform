@@ -82,6 +82,16 @@ Parameters:
     Default: waflog
 
 
+  DNSBucketPrefix:
+    Description: DNS Bucket Prefix
+    Type: String
+    Default: AWSLogs/851725230407/vpcdnsquerylogs/
+  
+  DNSIndexName:
+    Description: DNS's index name
+    Type: String
+    Default: dns
+
 Resources:
   OpenSearchANFWPipe:
     DependsOn: [PipeLogGroupANFW]
@@ -362,6 +372,71 @@ Resources:
           Key: owner
           Value: !Ref OwnerTag
 
+
+  OpenSearchDNSPipe:
+    DependsOn: [PipeLogGroupDNS]
+    Type: AWS::OSIS::Pipeline
+    Properties:
+      BufferOptions: 
+         PersistentBufferEnabled: false
+      #EncryptionAtRestOptions:  #암호화 여부
+      #  EncryptionAtRestOptions
+      LogPublishingOptions: 
+          CloudWatchLogDestination: 
+            LogGroup: !Sub "/aws/vendedlogs/OpenSearchIngestion/${OwnerTag}-dns/audit-logs"
+          IsLoggingEnabled: true
+      MaxUnits: 2
+      MinUnits: 1
+      PipelineConfigurationBody: !Sub |
+        version: "2"
+        log-pipeline:
+          source:
+            s3:
+              codec:
+                json:  # Other options "json", "csv", "parquet"
+              # Provide compression property, can be "none", "gzip", or "automatic"
+              
+              compression: "gzip"       #or automatic
+              aws:
+                region: "${AWS::Region}"
+                sts_role_arn: "${OpenSearchPipeRoleARN}"
+              acknowledgments: true
+              scan: # Examples: "PT4H" or "PT30M" or "PT100S" or "P3D" or "P1W"
+                range: "${LoadDataRange}"
+                buckets:
+                  - bucket:
+                      name: "${LogCentralBucketName}"
+                      filter:
+                        include_prefix:   #가져올 버킷의 prefix
+                          - "${DNSBucketPrefix}"
+              delete_s3_objects_on_read: false
+          sink:
+            - opensearch:
+                #생성된 OpenSearch Service domain endpoint
+                hosts: 
+                  ["${OpenSearchDomainEndpoint}"]
+                index: "${DNSIndexName}"
+                aws:
+                  sts_role_arn: "${OpenSearchPipeRoleARN}"
+                  region: "${AWS::Region}"
+                  serverless: false       
+      PipelineName: !Sub "${OwnerTag}-dnspipe"
+      Tags: 
+        -
+          Key: owner
+          Value: !Ref OwnerTag
+  PipeLogGroupDNS:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      #DataProtectionPolicy: Json
+      #KmsKeyId: String
+      #LogGroupClass: String # Infrequent Access로 가능
+      LogGroupName: !Sub "/aws/vendedlogs/OpenSearchIngestion/${OwnerTag}-dns/audit-logs"
+      RetentionInDays: 3   #유지 기간
+      Tags:
+        -
+          Key: owner
+          Value: !Ref OwnerTag
 
   OpenSearchWAFPipe:
     DependsOn: [PipeLogGroupWAF]

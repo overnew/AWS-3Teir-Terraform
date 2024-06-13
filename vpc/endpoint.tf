@@ -14,7 +14,8 @@ resource "aws_vpc_endpoint" "s3" {
   vpc_id       = aws_vpc.vpc_name.id
   service_name = "com.amazonaws.${var.region}.s3"
   vpc_endpoint_type = "Gateway"
-  route_table_ids = [aws_route_table.private_rt_a.id, aws_route_table.private_rt_c.id, aws_route_table.private_rt_default.id]
+  route_table_ids = [aws_route_table.private_rt_a.id, aws_route_table.private_rt_c.id, 
+      aws_route_table.private_rt_default_a.id, aws_route_table.private_rt_default_c.id]
 
   tags = merge(
     {
@@ -28,7 +29,8 @@ resource "aws_vpc_endpoint" "dynamodb" {
   vpc_id       = aws_vpc.vpc_name.id
   service_name = "com.amazonaws.${var.region}.dynamodb"
   vpc_endpoint_type = "Gateway"
-  route_table_ids = [aws_route_table.private_rt_a.id, aws_route_table.private_rt_c.id, aws_route_table.private_rt_default.id]
+  route_table_ids = [aws_route_table.private_rt_a.id, aws_route_table.private_rt_c.id, 
+     aws_route_table.private_rt_default_a.id, aws_route_table.private_rt_default_c.id]
 
   tags = merge(
     {
@@ -117,6 +119,14 @@ module "endpoints" {
       #security_group_ids  = ["sg-987654321"]
       subnet_ids          = local.endpoint_subnet_ids
       tags = { Name = "amp-workspace-${local.endpoint_postfix_name}" }
+    },
+    ssm = {
+      service             = "ssm"
+      private_dns_enabled = true
+      auto_accept = true
+      #security_group_ids  = ["sg-987654321"]
+      subnet_ids          = local.endpoint_subnet_ids
+      tags = { Name = "ssm-${local.endpoint_postfix_name}" }
     }
   }
 
