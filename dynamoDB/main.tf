@@ -1,5 +1,5 @@
 locals {
-  user_table_name = "user_table2"
+  user_table_name = "user_table"
 }
 
 resource "aws_dynamodb_table" "user_table" {
@@ -40,7 +40,8 @@ resource "aws_dynamodb_table" "user_table" {
   #}
 
   tags = {
-    Name        = "dynamodb-table-1"
+    owner = "ldj"
+    Name        = "user-table"
     Environment = "production"
   }
 }
