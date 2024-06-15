@@ -4,7 +4,7 @@ Parameters:
   InstanceType:
     Description: Instance Type for OpenSearch Cluster
     Type: String
-    Default: m6g.large.search #테스트에는낮은 스펙사용 t3.medium.search
+    Default: t3.medium.search #테스트에는낮은 스펙사용 m5.large.search
 
   InstanceCount:
     Description: Number of Instances for OpenSearch Cluster
@@ -24,17 +24,11 @@ Parameters:
   OSDomainName:
     Description: Domain name for OpenSearch
     Type: String
-    Default: ldj-opensearch-test-domain2
-  
-  OwnerTag:
-    Description: Your initial
-    Type: String
-    Default: ldj
-
-
+    Default: ldj-opensearch-test-domain 
+    
 Resources:
   OpenSearch:
-    DependsOn: [OpenSearchPipeRole]
+    #DependsOn: [OpenSearchSG]
     Type: AWS::OpenSearchService::Domain
     Properties:
       DomainName: !Ref OSDomainName
@@ -85,47 +79,35 @@ Resources:
       Tags:
         -
           Key: owner
-          Value: !Ref OwnerTag
+          Value: ldj
+      #pulic화를 위해 제거
+      #VPCOptions: 
+      #  SecurityGroupIds: 
+      #    - !Ref OpenSearchSG
+      #  SubnetIds: 
+      #    - subnet-02c59928b96231787    #하나만 해야지 생성되는데?
+      #  #  - subnet-02a6d8743d4fcb8b9   
+      #  #  - subnet-0f43eace403155dd6
+  #OpenSearchSG:
+  #  Type: AWS::EC2::SecurityGroup
+  #  Properties:
+  #    GroupDescription: Allow ALL Traffic
+  #    GroupName: ldj-OpenSearchSG
+  #    SecurityGroupIngress:
+  #      - IpProtocol: -1
+  #        CidrIp: '0.0.0.0/0'
+  #    SecurityGroupEgress:
+  #      - IpProtocol: -1
+  #        CidrIp: '0.0.0.0/0'
+  #    VpcId: 'vpc-01c885f9e4c0434f7' #!Ref [VPC 리소스 이름]
+  #    Tags:
+  #     -
+  #       Key: owner
+  #       Value: ldj
 
-
-  OpenSearchPipeRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub '${OwnerTag}-OpenSearchPipeRole1'
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: #[firehose.amazonaws.com, s3.amazonaws.com]
-                - osis-pipelines.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Policies:
-        - PolicyName: !Sub '${OwnerTag}-S3FullAccess'  #s3에 저장을 위한 권한
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: ['s3:*', 's3-object-lambda:*']
-                Resource: '*'
-        - PolicyName: !Sub '${OwnerTag}-pipeOpensearchAcccess'
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: ['es:DescribeDomain', 'es:ESHttp*']
-                Resource: '*'
-      Tags:
-        -
-          Key: owner
-          Value: !Ref OwnerTag
-  
 
 
 Outputs:
   OpenSearchEndpoint:
     Description: OpenSearch Endpoint URL
     Value: !Sub ${OpenSearch.DomainEndpoint}
-  OpenSearchPipeRole:
-    Description: OpenSearchPipeRole Arn
-    Value: !Sub ${OpenSearchPipeRole.Arn}
