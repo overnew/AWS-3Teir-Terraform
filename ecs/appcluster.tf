@@ -115,7 +115,7 @@ resource "aws_ecs_service" "app_service" {
   network_configuration {
     subnets           = [var.app_subnet_ids[0], var.app_subnet_ids[1]]
     assign_public_ip  = false
-    security_groups   = [var.web_alb_sg_id]  #일단 web sg로
+    security_groups   = [var.app_security_group]  #일단 web sg로
   }
   
   load_balancer {

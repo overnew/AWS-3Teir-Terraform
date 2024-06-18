@@ -20,7 +20,7 @@ output "app_subnet_ids" {
     aws_subnet.private_subnets["app_sub_2c"].id]
 }
 
-output "db_subnet_ids" {
-  value = [aws_subnet.private_subnets["db_sub_1a"].id,
-    aws_subnet.private_subnets["db_sub_2c"].id]
+output "endpoint_subnet_ids" {
+  value = [aws_subnet.private_subnets["endpoint_sub_1a"].id,
+    aws_subnet.private_subnets["endpoint_sub_2c"].id]
 }

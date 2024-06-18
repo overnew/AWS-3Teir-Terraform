@@ -81,7 +81,7 @@ module "security_groups" {
     project = var.project_name
     owner = var.owner
     part = "sg"
-    env ="test"
+    env ="prod"
   }
 
   #name의 post fix
@@ -89,10 +89,8 @@ module "security_groups" {
   vpc_cidr_block = var.vpc_cidr_block
 
   web_alb_sg_name = var.web_alb_sg_name
-  app_alb_sg_name = var.app_alb_sg_name
-  web_asg_security_group_name = var.web_asg_security_group_name
-  app_asg_security_group_name = var.app_asg_security_group_name
-  db_sg_name = var.db_sg_name
+  web_security_group_name = var.web_security_group_name
+  app_security_group_name = var.app_security_group_name
 }
 
 module "ecs" {
@@ -111,64 +109,11 @@ module "ecs" {
 
   web_subnet_ids = module.vpc.web_subnet_ids
   app_subnet_ids = module.vpc.app_subnet_ids
-  db_subnet_ids = module.vpc.db_subnet_ids
   web_alb_sg_id = module.security_groups.web_alb_sg_id
-  app_alb_sg_id = module.security_groups.web_alb_sg_id
-
+  web_security_group = module.security_groups.web_security_group_id
+  app_security_group = module.security_groups.app_security_group_id
+  
   slack_sns_arn = module.alert.slack_sns_arn
-}
-
-
-module "web_service" {
-  source = "./3tier"
-  count = 0  #3tier변경
-
-  web_asg_security_group_id = module.security_groups.web_asg_security_group_id
-  app_asg_security_group_id = module.security_groups.app_asg_security_group_id
-  web_alb_sg_id = module.security_groups.web_alb_sg_id
-  app_alb_sg_id = module.security_groups.app_alb_sg_id
-  db_sg_id = module.security_groups.db_sg_id
-
-  #subnet id 여러개 가져오기
-  vpc_id = module.vpc.vpc_id
-  public_subnet_ids = module.vpc.public_subnet_ids
-  private_subnet_ids = module.vpc.private_subnet_ids
-
-  web_subnet_ids = module.vpc.web_subnet_ids
-  app_subnet_ids = module.vpc.app_subnet_ids
-  db_subnet_ids = module.vpc.db_subnet_ids
-
- web_alb_name = var.web_alb_name
- app_alb_name = var.app_alb_name
- web_asg_name = var.web_asg_name
- app_asg_name = var.app_asg_name
- web_launch_template_name = var.web_launch_template_name
- app_launch_template_name = var.app_launch_template_name
-
- image_id = var.image_id
- instance_type = var.instance_type
- key_name = var.key_name
-
- db_name = var.db_name
- instance_type_db = var.instance_type_db
-
- db_username = var.db_username
- db_password = var.db_password
- db_subnet_group_name = var.db_subnet_group_name
-
- default_tag = {
-    project = var.project_name
-    owner = var.owner
-    part = "3tier"
-    env ="test"
-  }
-
-  #vpc endpoint
-  region = var.region
-  vpc_cidr_block = var.vpc_cidr_block
-
-  secretsmanager_vpc_endpoint_sg_name = var.secretsmanager_vpc_endpoint_sg_name
-  secretsmanager_endpoint_name = var.secretsmanager_endpoint_name
 }
 
 
@@ -361,3 +306,58 @@ resource "aws_cloudwatch_log_resource_policy" "route53-query-logging-policy" {
   policy_document = data.aws_iam_policy_document.route53-query-logging-policy.json
   policy_name     = "route53-query-logging-policy"
 }
+
+/*
+
+module "web_service" {
+  source = "./3tier"
+  count = 0  #3tier변경
+
+  web_asg_security_group_id = module.security_groups.web_asg_security_group_id
+  app_asg_security_group_id = module.security_groups.app_asg_security_group_id
+  web_alb_sg_id = module.security_groups.web_alb_sg_id
+  app_alb_sg_id = module.security_groups.app_alb_sg_id
+  db_sg_id = module.security_groups.db_sg_id
+
+  #subnet id 여러개 가져오기
+  vpc_id = module.vpc.vpc_id
+  public_subnet_ids = module.vpc.public_subnet_ids
+  private_subnet_ids = module.vpc.private_subnet_ids
+
+  web_subnet_ids = module.vpc.web_subnet_ids
+  app_subnet_ids = module.vpc.app_subnet_ids
+  db_subnet_ids = module.vpc.db_subnet_ids
+
+ web_alb_name = var.web_alb_name
+ app_alb_name = var.app_alb_name
+ web_asg_name = var.web_asg_name
+ app_asg_name = var.app_asg_name
+ web_launch_template_name = var.web_launch_template_name
+ app_launch_template_name = var.app_launch_template_name
+
+ image_id = var.image_id
+ instance_type = var.instance_type
+ key_name = var.key_name
+
+ db_name = var.db_name
+ instance_type_db = var.instance_type_db
+
+ db_username = var.db_username
+ db_password = var.db_password
+ db_subnet_group_name = var.db_subnet_group_name
+
+ default_tag = {
+    project = var.project_name
+    owner = var.owner
+    part = "3tier"
+    env ="test"
+  }
+
+  #vpc endpoint
+  region = var.region
+  vpc_cidr_block = var.vpc_cidr_block
+
+  secretsmanager_vpc_endpoint_sg_name = var.secretsmanager_vpc_endpoint_sg_name
+  secretsmanager_endpoint_name = var.secretsmanager_endpoint_name
+}
+*/

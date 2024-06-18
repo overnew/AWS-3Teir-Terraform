@@ -158,7 +158,7 @@ resource "aws_ecs_service" "web_service" {
   network_configuration {
     subnets           = [var.web_subnet_ids[0],var.web_subnet_ids[1]]
     assign_public_ip  = false
-    security_groups   = [var.web_alb_sg_id]
+    security_groups   = [var.web_security_group]
   }
   
   load_balancer {

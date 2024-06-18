@@ -352,13 +352,13 @@ resource "aws_route_table" "private_rt_default_c" {
 }
 
 resource "aws_route_table_association" "private_default_a" {
-  for_each       = toset(["web_sub_1a","db_sub_1a"])
+  for_each       = toset(["web_sub_1a","endpoint_sub_1a"])
   subnet_id      = aws_subnet.private_subnets[each.key].id
   route_table_id = aws_route_table.private_rt_default_a.id
 }
 
 resource "aws_route_table_association" "private_default_c" {
-  for_each       = toset(["web_sub_2c", "db_sub_2c"])
+  for_each       = toset(["web_sub_2c", "endpoint_sub_2c"])
   subnet_id      = aws_subnet.private_subnets[each.key].id
   route_table_id = aws_route_table.private_rt_default_c.id
 }
