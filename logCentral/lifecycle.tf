@@ -6,7 +6,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "bucket-config" {
     id = "log"
 
     expiration {
-      days = 120
+      days = 700
     }
 
     #filter {
@@ -28,7 +28,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "bucket-config" {
     }
 
     transition {
-      days          = 60
+      days          = 90
       storage_class = "GLACIER"
     }
   }

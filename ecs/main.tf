@@ -360,6 +360,7 @@ resource "aws_iam_role" "ecs_task_role" {
                 "ssm:Describe*",
                 "ssm:Get*",
                 "ssm:List*",
+                "secretsmanager:GetSecretValue",
                 "aps:RemoteWrite"  #프로메테우스로 데이터 전송
             ],
             "Resource": "*"

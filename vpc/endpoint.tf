@@ -52,6 +52,7 @@ module "endpoints" {
   security_group_ids = [var.endpoint_sg_id]
 
   endpoints = {
+    
     secretsmanager = {
       service    = "secretsmanager"
       private_dns_enabled = true
