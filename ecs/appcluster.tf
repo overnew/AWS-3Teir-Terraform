@@ -104,7 +104,7 @@ resource "aws_ecs_service" "app_service" {
   name            = local.app_name
   cluster         = aws_ecs_cluster.app_cluster.arn
   task_definition = aws_ecs_task_definition.app_task.arn
-  desired_count   = 2
+  desired_count   = 8
   launch_type                         = "FARGATE"
   scheduling_strategy                 = "REPLICA"
   
@@ -132,7 +132,7 @@ resource "aws_ecs_service" "app_service" {
 #### auto
 #ecs task auto scaling
 resource "aws_appautoscaling_target" "ecs_app_target" {
-  max_capacity       = 10
+  max_capacity       = 20
   min_capacity       = 1
   resource_id        = "service/${aws_ecs_cluster.app_cluster.name}/${aws_ecs_service.app_service.name}" 
 
@@ -164,20 +164,20 @@ resource "aws_appautoscaling_policy" "ecs_app_scale_out" {
       metric_interval_upper_bound = 10
 
       #scaling 개수, 음 or 양
-      scaling_adjustment          = 1
+      scaling_adjustment          = 2
     }
 
     step_adjustment {
       metric_interval_lower_bound = 10
       metric_interval_upper_bound = 20
 
-      scaling_adjustment          = 2
+      scaling_adjustment          = 4
     }
 
     step_adjustment {
       metric_interval_lower_bound = 20
 
-      scaling_adjustment          = 3
+      scaling_adjustment          = 6
     }
   }
 
