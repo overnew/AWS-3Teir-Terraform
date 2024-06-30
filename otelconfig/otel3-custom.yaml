@@ -11,6 +11,7 @@ receivers:
       http:
         endpoint: 0.0.0.0:4318
   awsecscontainermetrics:
+    collection_interval: 10s
 
 processors:
   batch/metrics:
